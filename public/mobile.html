@@ -98,6 +98,22 @@ body{font-family:'Roboto',sans-serif;background:var(--bg-primary);color:var(--te
 .mini-stat-val{font-size:22px;font-weight:800;color:var(--yt-blue)}
 .mini-stat-lbl{font-size:10px;color:var(--text-secondary);text-transform:uppercase;margin-top:4px}
 
+/* CONTROLS PANEL */
+.controls-panel{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px}
+.ctrl-section{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.ctrl-section-title{font-size:12px;font-weight:800;color:var(--text-primary);margin-bottom:8px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.5px}
+.ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ctrl-btn{background:var(--bg-hover);border:1px solid var(--border);color:white;padding:10px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+.ctrl-btn:active{transform:scale(0.96)}
+.ctrl-btn.pix{background:linear-gradient(135deg,#008a7b,#32bcad);color:#000}
+.ctrl-btn.gift{background:linear-gradient(135deg,#6a1b9a,#9c27b0);color:white}
+.ctrl-btn.like{background:linear-gradient(135deg,#ff0000,#ff6b6b);color:white}
+.ctrl-btn.scene{background:var(--bg-elevated);border:1px solid var(--yt-blue)}
+.ctrl-btn.scene.active{background:var(--yt-blue);color:#000}
+.gift-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.gift-mini{flex:0 0 auto;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;display:flex;align-items:center;gap:6px;font-size:12px}
+.gift-mini button{background:var(--yt-blue);border:none;color:#000;padding:4px 8px;border-radius:var(--radius-full);font-size:11px;font-weight:700}
+
 /* FULLSCREEN CHAT OVERLAY */
 .fullscreen-chat{position:fixed;inset:0;background:var(--bg-primary);z-index:100;display:none;flex-direction:column}
 .fullscreen-chat.active{display:flex}
@@ -128,6 +144,7 @@ body{font-family:'Roboto',sans-serif;background:var(--bg-primary);color:var(--te
     <div class="tab active" data-panel="chat-panel" onclick="switchTab('chat-panel', this)">💬 Chat</div>
     <div class="tab" data-panel="cam-panel" onclick="switchTab('cam-panel', this)">📷 Webcam</div>
     <div class="tab" data-panel="stats-panel" onclick="switchTab('stats-panel', this)">📊 Stats</div>
+    <div class="tab" data-panel="controls-panel" onclick="switchTab('controls-panel', this)">🎛️ Controle</div>
   </div>
 
   <div class="panel active" id="chat-panel">
@@ -162,6 +179,62 @@ body{font-family:'Roboto',sans-serif;background:var(--bg-primary);color:var(--te
       <div class="mini-stat-card"><div class="mini-stat-val" id="stat-likes">0</div><div class="mini-stat-lbl">Likes</div></div>
       <div class="mini-stat-card"><div class="mini-stat-val" id="stat-views">0</div><div class="mini-stat-lbl">Views Totais</div></div>
       <div class="mini-stat-card"><div class="mini-stat-val" id="stat-subs">0</div><div class="mini-stat-lbl">Novos Inscritos</div></div>
+    </div>
+    <div style="padding:0 14px 14px">
+      <div class="mini-stat-card" style="background:linear-gradient(135deg,rgba(156,39,176,0.15),rgba(50,188,173,0.1))">
+        <div class="mini-stat-lbl">Trem do Hype</div>
+        <div class="mini-stat-val" id="stat-hype" style="color:#ffd700">Nível 1 — 0%</div>
+        <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:8px;overflow:hidden"><div id="stat-hype-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd700,#ffab00)"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="controls-panel">
+    <div class="controls-panel">
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">🎬 Controlar Live do Celular</div>
+        <div class="ctrl-grid">
+          <button class="ctrl-btn scene" onclick="sendControl('scene','gaming')">🎮 Jogo</button>
+          <button class="ctrl-btn scene" onclick="sendControl('scene','chatting')">🎙️ Chatting</button>
+          <button class="ctrl-btn scene" onclick="sendControl('scene','scifi')">🚀 Sci-Fi</button>
+          <button class="ctrl-btn" onclick="sendControl('filter')">🎨 Filtro</button>
+        </div>
+      </div>
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">🎙️ Soundboard Remoto</div>
+        <div class="ctrl-grid">
+          <button class="ctrl-btn" onclick="sendControl('sound','applause')">👏 Aplausos</button>
+          <button class="ctrl-btn" onclick="sendControl('sound','laughter')">🤣 Risada</button>
+          <button class="ctrl-btn" onclick="sendControl('sound','horn')">🎺 Corneta</button>
+          <button class="ctrl-btn" onclick="sendControl('sound','fail')">❌ Errou</button>
+          <button class="ctrl-btn" onclick="sendControl('sound','victory')">🏆 Vitória</button>
+          <button class="ctrl-btn" onclick="sendControl('sound','drumroll')">🥁 Tambor</button>
+        </div>
+      </div>
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">🎁 Enviar Presentes (controla PC)</div>
+        <div class="gift-row">
+          <div class="gift-mini"><span>🌹 Rosa R$2</span><button onclick="sendGift('🌹 Rosa',2,'🌹')">Enviar</button></div>
+          <div class="gift-mini"><span>☕ Café R$5</span><button onclick="sendGift('☕ Café',5,'☕')">Enviar</button></div>
+          <div class="gift-mini"><span>🍕 Pizza R$15</span><button onclick="sendGift('🍕 Pizza',15,'🍕')">Enviar</button></div>
+          <div class="gift-mini"><span>🚀 Foguete R$50</span><button onclick="sendGift('🚀 Foguete',50,'🚀')">Enviar</button></div>
+          <div class="gift-mini"><span>👑 Coroa R$100</span><button onclick="sendGift('👑 Coroa',100,'👑')">Enviar</button></div>
+        </div>
+      </div>
+      <div class="ctrl-section">
+        <div class="ctrl-section-title">⚡ LIVE PIX pelo Celular</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="text" id="mobile-pix-name" placeholder="Seu nome" value="Fã Mobile" style="flex:1;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;color:white;font-size:12px">
+          <input type="number" id="mobile-pix-amt" placeholder="R$" value="20" style="width:80px;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;color:white;font-size:12px">
+        </div>
+        <input type="text" id="mobile-pix-msg" placeholder="Mensagem para ler em voz alta..." value="Salve do celular!" style="width:100%;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;color:white;font-size:12px;margin-bottom:8px">
+        <button class="ctrl-btn pix" style="width:100%" onclick="sendPix()">⚡ Enviar LIVE PIX com Voz</button>
+      </div>
+      <div class="ctrl-grid">
+        <button class="ctrl-btn like" onclick="sendControl('like')">❤️ Like + Coração</button>
+        <button class="ctrl-btn gift" onclick="sendControl('hype')">🚀 Boost Hype</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-tertiary);text-align:center">Todos os botões controlam a live no PC em tempo real via WebSocket.</div>
     </div>
   </div>
 
@@ -341,8 +414,37 @@ function updateMiniStats(payload){
   document.getElementById('stat-likes').textContent = fmt(payload.likes||0);
   document.getElementById('stat-views').textContent = fmt(payload.totalViews||0);
   document.getElementById('stat-subs').textContent = fmt(payload.newSubs||0);
+  // Atualiza hype se vier do host
+  if(payload.hypeLevel!==undefined){
+    const hypeEl=document.getElementById('stat-hype');
+    const fillEl=document.getElementById('stat-hype-fill');
+    if(hypeEl) hypeEl.textContent='Nível '+payload.hypeLevel+' — '+(payload.hypeProgress||0)+'%';
+    if(fillEl) fillEl.style.width=(payload.hypeProgress||0)+'%';
+  }
 }
 function fmt(n){ return n.toLocaleString('pt-BR'); }
+
+/* ===== CONTROLES REMOTOS (celular -> PC) ===== */
+function sendControl(action, data){
+  if(!ws || ws.readyState!==WebSocket.OPEN){ alert('Conecte primeiro ao PC!'); return; }
+  ws.send(JSON.stringify({ type: 'mobile-control', action, data }));
+  // feedback tátil se suportado
+  if(navigator.vibrate) navigator.vibrate(35);
+  // feedback visual simples
+  const btn=event?.currentTarget;
+  if(btn){ btn.style.transform='scale(0.92)'; setTimeout(()=>btn.style.transform='',150); }
+}
+function sendGift(name, price, emoji){
+  sendControl('gift', {name, price, emoji});
+  addSystemMsg('🎁 Você enviou '+name+' para a live!');
+}
+function sendPix(){
+  const name=document.getElementById('mobile-pix-name').value.trim()||'Fã Mobile';
+  const amount=parseFloat(document.getElementById('mobile-pix-amt').value)||10;
+  const msg=document.getElementById('mobile-pix-msg').value.trim()||'Salve!';
+  sendControl('pix', {name, amount, msg, pitch:'normal'});
+  addSystemMsg('⚡ PIX de R$ '+amount+' enviado! Aguarde o som no PC.');
+}
 
 /* ===== TABS ===== */
 function switchTab(panelId, el){

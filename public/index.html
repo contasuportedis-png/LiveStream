@@ -153,10 +153,26 @@ body.theater-mode .chat-panel{width:100%;min-height:400px;border-left:none;borde
 .cam-btn,.cam-btn-secondary{background:rgba(0,0,0,0.75);color:white;border:1.5px solid var(--yt-red);padding:14px 28px;border-radius:var(--radius-lg);font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:10px;backdrop-filter:blur(12px)}
 .cam-btn-secondary{border-color:var(--yt-blue)}
 
-.webcam-frame{position:absolute;bottom:56px;right:16px;width:180px;height:120px;border-radius:var(--radius-md);overflow:hidden;border:2px solid rgba(255,255,255,0.15);box-shadow:var(--shadow-xl);z-index:15;display:none;background:#000}
+.webcam-frame{position:absolute;bottom:56px;right:16px;width:180px;height:120px;border-radius:var(--radius-md);overflow:hidden;border:2px solid rgba(255,255,255,0.15);box-shadow:var(--shadow-xl);z-index:15;display:none;background:#000;touch-action:none;user-select:none;transition:border-color 0.2s, box-shadow 0.2s}
+.webcam-frame.dragging{border-color:var(--yt-blue);box-shadow:0 0 20px rgba(62,166,255,0.6);cursor:grabbing}
+.webcam-frame:hover{border-color:rgba(255,255,255,0.3)}
 .webcam-frame video{width:100%;height:100%;object-fit:cover}
 .webcam-frame.mirror{transform:scaleX(-1)}
-.webcam-frame .wf-label{position:absolute;bottom:6px;left:8px;font-size:10px;color:rgba(255,255,255,0.9);background:rgba(0,0,0,0.6);padding:3px 10px;border-radius:var(--radius-xs);backdrop-filter:blur(4px)}
+.webcam-frame .wf-label{position:absolute;bottom:6px;left:8px;font-size:10px;color:rgba(255,255,255,0.9);background:rgba(0,0,0,0.6);padding:3px 10px;border-radius:var(--radius-xs);backdrop-filter:blur(4px);pointer-events:none}
+.webcam-frame .wf-drag-handle{position:absolute;top:4px;right:4px;width:28px;height:28px;background:rgba(0,0,0,0.65);border-radius:var(--radius-full);display:flex;align-items:center;justify-content:center;cursor:grab;font-size:12px;border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(6px)}
+.webcam-frame .wf-drag-handle:active{cursor:grabbing}
+.webcam-frame .wf-resize-handle{position:absolute;bottom:0;right:0;width:16px;height:16px;background:var(--yt-blue);cursor:nwse-resize;border-radius:4px 0 0 0;display:flex;align-items:center;justify-content:center;font-size:8px}
+.webcam-controls{margin-top:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;display:none}
+.webcam-controls.active{display:block}
+.webcam-controls-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.wc-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.wc-preset-btn{background:var(--bg-hover);border:1px solid var(--border);color:var(--text-primary);padding:6px 10px;border-radius:var(--radius-sm);font-size:11px;cursor:pointer;transition:all 0.15s}
+.wc-preset-btn.active,.wc-preset-btn:hover{background:var(--yt-blue);color:#000;font-weight:700}
+.wc-slider-row{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:12px;color:var(--text-secondary)}
+.wc-slider-row input[type=range]{flex:1;accent-color:var(--yt-blue)}
+.wc-style-row{display:flex;gap:6px;margin-top:8px}
+.wc-style-btn{flex:1;background:var(--bg-hover);border:1px solid var(--border);color:white;padding:8px;border-radius:var(--radius-sm);font-size:12px;cursor:pointer}
+.wc-style-btn.active{background:var(--yt-blue);color:#000}
 
 .audio-eq-bar{position:absolute;bottom:56px;left:16px;display:none;align-items:flex-end;gap:3px;height:24px;z-index:15;background:rgba(0,0,0,0.6);padding:4px 8px;border-radius:var(--radius-sm);backdrop-filter:blur(6px)}
 .audio-eq-bar .bar{width:3px;background:var(--yt-green-light);border-radius:2px;transition:height 0.1s ease}
@@ -657,7 +673,9 @@ body.theater-mode .chat-panel{width:100%;min-height:400px;border-left:none;borde
 
       <div class="webcam-frame" id="webcam-frame">
         <video id="webcam-video" autoplay playsinline muted></video>
-        <div class="wf-label">Você</div>
+        <div class="wf-label" id="wf-label">Você • arraste para mover</div>
+        <div class="wf-drag-handle" id="wf-drag-handle" title="Arraste para mover">✥</div>
+        <div class="wf-resize-handle" id="wf-resize-handle" title="Arraste para redimensionar">⤡</div>
       </div>
 
       <div class="audio-eq-bar" id="audio-eq">
@@ -814,6 +832,60 @@ body.theater-mode .chat-panel{width:100%;min-height:400px;border-left:none;borde
         <button class="companion-cam-toggle" id="companion-cam-toggle" onclick="toggleMobileCamOnPlayer()">📷 Mostrar Webcam do Celular</button>
       </div>
       <div class="companion-hint">No celular, acesse a mesma URL + <strong>/mobile</strong> e digite este código para ver o chat e usar a câmera como webcam.</div>
+    </div>
+
+    <!-- WEBCAM PERSONALIZAÇÃO -->
+    <div class="webcam-controls" id="webcam-controls">
+      <div class="webcam-controls-title">
+        <span>📷 Personalizar Webcam</span>
+        <button class="ctrl ctrl-sec" style="padding:4px 8px;font-size:11px" onclick="resetWebcamPosition()">↺ Resetar</button>
+      </div>
+      <div class="wc-presets">
+        <button class="wc-preset-btn active" data-pos="bottom-right" onclick="setWebcamPreset('bottom-right',this)">↘ Canto DIR</button>
+        <button class="wc-preset-btn" data-pos="bottom-left" onclick="setWebcamPreset('bottom-left',this)">↙ Canto ESQ</button>
+        <button class="wc-preset-btn" data-pos="top-right" onclick="setWebcamPreset('top-right',this)">↗ Topo DIR</button>
+        <button class="wc-preset-btn" data-pos="top-left" onclick="setWebcamPreset('top-left',this)">↖ Topo ESQ</button>
+        <button class="wc-preset-btn" data-pos="center" onclick="setWebcamPreset('center',this)">◎ Centro</button>
+        <button class="wc-preset-btn" data-pos="fullscreen" onclick="setWebcamPreset('fullscreen',this)">⛶ Tela Cheia</button>
+      </div>
+      <div class="wc-slider-row"><span>Tamanho</span><input type="range" id="wc-size-slider" min="120" max="340" value="180" oninput="updateWebcamSize(this.value)"><span id="wc-size-val">180px</span></div>
+      <div class="wc-slider-row"><span>Opacidade</span><input type="range" id="wc-opacity-slider" min="60" max="100" value="100" oninput="updateWebcamOpacity(this.value)"><span id="wc-opacity-val">100%</span></div>
+      <div class="wc-style-row">
+        <button class="wc-style-btn active" onclick="setWebcamStyle('rounded',this)">⬜ Bordas</button>
+        <button class="wc-style-btn" onclick="setWebcamStyle('circle',this)">⬤ Círculo</button>
+        <button class="wc-style-btn" onclick="setWebcamStyle('borderless',this)">Sem Borda</button>
+        <button class="wc-style-btn" onclick="toggleWebcamMirror()">🪞 Espelhar</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px">💡 Dica: arraste a webcam diretamente no vídeo com o mouse/toque. Segure no ✥ e no canto ⤡ para redimensionar.</div>
+    </div>
+
+    <!-- PAINEL PERSONALIZAÇÃO GERAL -->
+    <div class="webcam-controls" id="personalization-panel" style="display:block">
+      <div class="webcam-controls-title"><span>🎨 Personalização da Live</span><button class="ctrl ctrl-sec" style="padding:4px 8px;font-size:11px" onclick="togglePersonalizationPanel()">−</button></div>
+      <div id="personalization-body">
+        <div class="wc-slider-row" style="flex-direction:column;align-items:stretch;gap:6px">
+          <label style="font-size:12px;font-weight:600;color:var(--text-primary)">Título da Live</label>
+          <input type="text" id="custom-live-title" class="form-input" value="LIVE - Jogando e conversando com vocês!" oninput="updateLiveTitle(this.value)" placeholder="Digite o título da live">
+        </div>
+        <div class="wc-slider-row" style="flex-direction:column;align-items:stretch;gap:6px;margin-top:10px">
+          <label style="font-size:12px;font-weight:600;color:var(--text-primary)">Lower Third (rodapé)</label>
+          <input type="text" id="custom-ticker" class="form-input" value="🔥 BEM-VINDO À LIVE AO VIVO! DEIXE O LIKE, SE INSCREVA NO CANAL E PARTICIPE NO CHAT! 🔥" oninput="updateTickerText(this.value)">
+        </div>
+        <div class="wc-slider-row" style="margin-top:10px"><label style="flex:1;font-size:12px;font-weight:600">Tema</label>
+          <button class="wc-preset-btn active" onclick="setTheme('dark',this)">🌙 Escuro</button>
+          <button class="wc-preset-btn" onclick="setTheme('light',this)">☀️ Claro</button>
+        </div>
+        <div class="wc-slider-row"><label style="flex:1;font-size:12px">Chat: Tamanho fonte</label>
+          <button class="wc-preset-btn" onclick="setChatFontSize('small',this)">A-</button>
+          <button class="wc-preset-btn active" onclick="setChatFontSize('normal',this)">A</button>
+          <button class="wc-preset-btn" onclick="setChatFontSize('large',this)">A+</button>
+        </div>
+        <div class="wc-slider-row"><label style="flex:1;font-size:12px">Comentários extras</label>
+          <button class="wc-preset-btn" onclick="adjustChatDensity(-1)">− Menos</button>
+          <button class="wc-preset-btn" onclick="adjustChatDensity(1)">+ Mais</button>
+          <span id="chat-density-val" style="font-size:11px;color:var(--text-tertiary)">Normal</span>
+        </div>
+      </div>
     </div>
 
     <div class="controls">
@@ -1052,69 +1124,154 @@ function playTone(freq,duration,type,volume){
   }catch(e){}
 }
 
-/* REALISTIC AUDIBLE SOUND SYNTHESIS & NATURAL SPEECH TTS */
+/* REALISTIC AUDIBLE SOUND SYNTHESIS & NATURAL SPEECH TTS — FIXED */
+let ttsVoices = [];
+let ttsReady = false;
+function loadTTSVoices(){
+  try{
+    ttsVoices = window.speechSynthesis.getVoices() || [];
+    if(ttsVoices.length>0) ttsReady=true;
+  }catch(e){}
+}
+if('speechSynthesis' in window){
+  loadTTSVoices();
+  window.speechSynthesis.onvoiceschanged = loadTTSVoices;
+  // Chrome precisa de gesto para carregar vozes; tenta recarregar no primeiro clique
+  document.addEventListener('click', loadTTSVoices, {once:true});
+}
 function speakTTS(text, pitchStyle = 'normal'){
   initAudio();
-  if(soundEnabled && 'speechSynthesis' in window){
-    try{
-      window.speechSynthesis.cancel();
+  if(!soundEnabled || !('speechSynthesis' in window)) return;
+  try{
+    // Garante vozes carregadas
+    if(!ttsReady) loadTTSVoices();
+    window.speechSynthesis.cancel();
+    // Pequeno delay para evitar corte em alguns navegadores
+    setTimeout(()=>{
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'pt-BR';
-      utterance.rate = 1.0;
-      utterance.pitch = pitchStyle === 'high' ? 1.4 : pitchStyle === 'low' ? 0.7 : 1.0;
-
-      const voices = window.speechSynthesis.getVoices();
-      const ptVoice = voices.find(v => v.lang && (v.lang.startsWith('pt') || v.lang.includes('BR')));
+      utterance.volume = 1.0;
+      utterance.rate = 0.95;
+      utterance.pitch = pitchStyle === 'high' ? 1.35 : pitchStyle === 'low' ? 0.75 : 1.0;
+      // Tenta achar voz pt-BR real, senão usa primeira disponível
+      let ptVoice = ttsVoices.find(v => v.lang && (v.lang.toLowerCase().includes('pt-br') || v.lang.toLowerCase().includes('pt_br')));
+      if(!ptVoice) ptVoice = ttsVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
       if(ptVoice) utterance.voice = ptVoice;
-
+      utterance.onend = ()=>{ console.log('[TTS] fim'); };
+      utterance.onerror = (e)=>{ console.warn('[TTS] erro', e.error); };
+      // Desbloqueia sintese se pausada (Chrome)
+      if(window.speechSynthesis.paused) window.speechSynthesis.resume();
       window.speechSynthesis.speak(utterance);
-    }catch(e){}
-  }
+      // Fallback: se não falar em 300ms, tenta novamente
+      setTimeout(()=>{
+        if(!window.speechSynthesis.speaking && !window.speechSynthesis.pending){
+          console.warn('[TTS] retry sem voz específica');
+          const u2=new SpeechSynthesisUtterance(text);
+          u2.lang='pt-BR'; u2.rate=0.95; u2.pitch=utterance.pitch;
+          window.speechSynthesis.speak(u2);
+        }
+      }, 400);
+    }, 80);
+  }catch(e){ console.warn('[TTS] exception',e); }
 }
 
 /* HIGH-QUALITY HARMONIC SOUND EFFECTS */
 
-// 1. CRYSTAL BELL PIX CHIME (Harmonic Chord E6-B6-E7)
+// 1. CRYSTAL BELL PIX CHIME — V2 BONITO (caixa registradora + sino com reverb, sem ser feio)
 function playPixSound(){
   if(!soundEnabled||!audioCtx) return;
-  const now = audioCtx.currentTime;
-  [1318.51, 1975.53, 2637.02].forEach((freq, i) => {
-    try{
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now + i*0.06);
-      gain.gain.setValueAtTime(0, now + i*0.06);
-      gain.gain.linearRampToValueAtTime(0.2, now + i*0.06 + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + i*0.06 + 1.2);
-      osc.connect(gain); gain.connect(audioCtx.destination);
-      osc.start(now + i*0.06); osc.stop(now + i*0.06 + 1.2);
-    }catch(e){}
-  });
+  try{
+    const now = audioCtx.currentTime;
+    // Master gain com soft clipping
+    const masterGain = audioCtx.createGain();
+    masterGain.gain.setValueAtTime(0.0, now);
+    masterGain.gain.linearRampToValueAtTime(0.45, now+0.02);
+    masterGain.gain.exponentialRampToValueAtTime(0.0001, now+2.2);
+    // Filtro passa-baixa suave para tirar estridência
+    const lowpass = audioCtx.createBiquadFilter();
+    lowpass.type='lowpass'; lowpass.frequency.value=4800; lowpass.Q.value=0.7;
+    masterGain.connect(lowpass); lowpass.connect(audioCtx.destination);
+    // Acorde maior bonito: C6 - E6 - G6 - C7 + brilho E7
+    const notes = [
+      {freq: 1046.50, time: 0.00, type:'triangle', vol:0.22, detune: 4}, // C6
+      {freq: 1318.51, time: 0.07, type:'sine', vol:0.20, detune: -3}, // E6
+      {freq: 1567.98, time: 0.14, type:'sine', vol:0.18, detune: 5}, // G6
+      {freq: 2093.00, time: 0.21, type:'triangle', vol:0.16, detune: -2}, // C7
+      {freq: 2637.02, time: 0.28, type:'sine', vol:0.12, detune: 0}, // E7 brilho
+    ];
+    notes.forEach(n=>{
+      const osc=audioCtx.createOscillator();
+      const gain=audioCtx.createGain();
+      osc.type=n.type; osc.frequency.value=n.freq; osc.detune.value=n.detune;
+      gain.gain.setValueAtTime(0, now+n.time);
+      gain.gain.linearRampToValueAtTime(n.vol, now+n.time+0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now+n.time+1.6);
+      osc.connect(gain); gain.connect(masterGain);
+      osc.start(now+n.time); osc.stop(now+n.time+1.7);
+      // Harmônico oitava abaixo sutil para corpo
+      if(n.vol>0.15){
+        const osc2=audioCtx.createOscillator();
+        const gain2=audioCtx.createGain();
+        osc2.type='sine'; osc2.frequency.value=n.freq/2; osc2.detune.value=n.detune+2;
+        gain2.gain.setValueAtTime(0, now+n.time);
+        gain2.gain.linearRampToValueAtTime(n.vol*0.18, now+n.time+0.02);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now+n.time+1.2);
+        osc2.connect(gain2); gain2.connect(masterGain);
+        osc2.start(now+n.time); osc2.stop(now+n.time+1.2);
+      }
+    });
+    // Sub grave curto tipo "ka-ching"
+    const subOsc=audioCtx.createOscillator();
+    const subGain=audioCtx.createGain();
+    subOsc.type='sine'; subOsc.frequency.setValueAtTime(120, now);
+    subOsc.frequency.exponentialRampToValueAtTime(60, now+0.35);
+    subGain.gain.setValueAtTime(0.18, now);
+    subGain.gain.exponentialRampToValueAtTime(0.0001, now+0.4);
+    subOsc.connect(subGain); subGain.connect(masterGain);
+    subOsc.start(now); subOsc.stop(now+0.4);
+    // Click metálico inicial (moeda)
+    const clickOsc=audioCtx.createOscillator();
+    const clickGain=audioCtx.createGain();
+    clickOsc.type='square'; clickOsc.frequency.value=3200;
+    clickGain.gain.setValueAtTime(0.12, now);
+    clickGain.gain.exponentialRampToValueAtTime(0.0001, now+0.08);
+    clickOsc.connect(clickGain); clickGain.connect(masterGain);
+    clickOsc.start(now); clickOsc.stop(now+0.08);
+  }catch(e){ console.warn('pix sound',e); }
 }
 
-// 2. REAL APPLAUSE NOISE BUFFER (Audience Clapping Filter)
+// 2. APPLAUSE BONITO — palmas reais com camadas + plateia
 function playApplauseSound(){
   if(!soundEnabled||!audioCtx) return;
+  const now=audioCtx.currentTime;
   try{
-    const bufferSize = audioCtx.sampleRate * 1.8;
+    // Camada 1: palmas individuais ritmadas (não ruído branco feio)
+    for(let i=0;i<14;i++){
+      const t=now + i*0.12 + Math.random()*0.05;
+      const osc=audioCtx.createOscillator();
+      const gain=audioCtx.createGain();
+      const filt=audioCtx.createBiquadFilter();
+      osc.type='square'; osc.frequency.value=180 + Math.random()*60;
+      filt.type='bandpass'; filt.frequency.value=1200 + Math.random()*300; filt.Q.value=1.0;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.18, t+0.005);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t+0.18);
+      osc.connect(filt); filt.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t); osc.stop(t+0.18);
+    }
+    // Camada 2: ruído de plateia suave de fundo (menos estridente que antes)
+    const bufferSize = audioCtx.sampleRate * 1.2;
     const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
     const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-    const noise = audioCtx.createBufferSource();
-    noise.buffer = buffer;
-
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'bandpass'; filter.frequency.value = 1100; filter.Q.value = 1.2;
-
-    const gain = audioCtx.createGain();
-    const now = audioCtx.currentTime;
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.25, now + 0.2);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
-
-    noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-    noise.start(now); noise.stop(now + 1.8);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random()*2-1) * 0.3 * Math.sin(Math.PI * i/bufferSize);
+    const noise = audioCtx.createBufferSource(); noise.buffer = buffer;
+    const filter = audioCtx.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=2200; filter.Q.value=0.5;
+    const g2 = audioCtx.createGain();
+    g2.gain.setValueAtTime(0, now);
+    g2.gain.linearRampToValueAtTime(0.08, now+0.3);
+    g2.gain.exponentialRampToValueAtTime(0.0001, now+1.4);
+    noise.connect(filter); filter.connect(g2); g2.connect(audioCtx.destination);
+    noise.start(now); noise.stop(now+1.4);
   }catch(e){}
 }
 
@@ -1457,7 +1614,206 @@ function stopCamera(){
 }
 
 function toggleCamera(){if(!cameraActive)return;useFront=!useFront;stopCamera();startCameraOnly();}
-function toggleWebcamFrame(){if(!cameraActive)return;const f=document.getElementById('webcam-frame');f.style.display=f.style.display==='none'?'block':'none';}
+function toggleWebcamFrame(){
+  const f=document.getElementById('webcam-frame');
+  if(!cameraActive && !f.srcObject && !document.getElementById('webcam-video').srcObject) {
+    toast('Ative a câmera primeiro!','#ff6b6b'); return;
+  }
+  f.style.display=f.style.display==='none'?'block':'none';
+  if(f.style.display!=='none') document.getElementById('webcam-controls').classList.add('active');
+}
+
+/* ===== WEBCAM ARRASTÁVEL + CONTROLES ===== */
+let webcamPreset='bottom-right';
+function setWebcamPreset(pos,btn){
+  webcamPreset=pos;
+  document.querySelectorAll('.wc-preset-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const f=document.getElementById('webcam-frame');
+  f.style.transition='all 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+  setTimeout(()=>f.style.transition='',400);
+  if(pos==='bottom-right'){ f.style.top='auto'; f.style.bottom='56px'; f.style.left='auto'; f.style.right='16px'; f.style.transform='none'; f.style.width=document.getElementById('wc-size-slider').value+'px'; f.style.height=''; }
+  else if(pos==='bottom-left'){ f.style.top='auto'; f.style.bottom='56px'; f.style.left='16px'; f.style.right='auto'; f.style.transform='none'; }
+  else if(pos==='top-right'){ f.style.top='50px'; f.style.bottom='auto'; f.style.left='auto'; f.style.right='16px'; f.style.transform='none'; }
+  else if(pos==='top-left'){ f.style.top='50px'; f.style.bottom='auto'; f.style.left='16px'; f.style.right='auto'; f.style.transform='none'; }
+  else if(pos==='center'){ f.style.top='50%'; f.style.bottom='auto'; f.style.left='50%'; f.style.right='auto'; f.style.transform='translate(-50%,-50%)'; }
+  else if(pos==='fullscreen'){ f.style.top='0'; f.style.bottom='0'; f.style.left='0'; f.style.right='0'; f.style.width='100%'; f.style.height='100%'; f.style.transform='none'; f.style.borderRadius='0'; }
+  if(pos!=='fullscreen'){ f.style.borderRadius='12px'; }
+  try{ localStorage.setItem('wc-preset',pos); }catch(e){}
+  toast('Webcam: '+pos,'#3ea6ff');
+}
+function updateWebcamSize(val){
+  const f=document.getElementById('webcam-frame');
+  if(webcamPreset==='fullscreen') return;
+  const w=parseInt(val);
+  f.style.width=w+'px';
+  f.style.height=Math.round(w*0.66)+'px';
+  document.getElementById('wc-size-val').textContent=w+'px';
+  try{ localStorage.setItem('wc-size',val);}catch(e){}
+}
+function updateWebcamOpacity(val){
+  document.getElementById('webcam-frame').style.opacity=val/100;
+  document.getElementById('wc-opacity-val').textContent=val+'%';
+  try{ localStorage.setItem('wc-opacity',val);}catch(e){}
+}
+function setWebcamStyle(style,btn){
+  document.querySelectorAll('.wc-style-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const f=document.getElementById('webcam-frame');
+  if(style==='rounded'){ f.style.borderRadius='12px'; f.style.border='2px solid rgba(255,255,255,0.15)'; }
+  else if(style==='circle'){ f.style.borderRadius='50%'; f.style.border='3px solid var(--yt-blue)'; }
+  else if(style==='borderless'){ f.style.borderRadius='8px'; f.style.border='none'; }
+  try{ localStorage.setItem('wc-style',style);}catch(e){}
+}
+function toggleWebcamMirror(){
+  const f=document.getElementById('webcam-frame');
+  const v=document.getElementById('webcam-video');
+  const isMirrored=f.classList.contains('mirror');
+  f.classList.toggle('mirror',!isMirrored);
+  v.style.transform=isMirrored?'':'scaleX(-1)';
+  toast(isMirrored?'Espelho OFF':'Espelho ON','#3ea6ff');
+}
+function resetWebcamPosition(){
+  try{ localStorage.removeItem('wc-preset'); localStorage.removeItem('wc-size'); localStorage.removeItem('wc-opacity'); }catch(e){}
+  document.getElementById('wc-size-slider').value=180; document.getElementById('wc-opacity-slider').value=100;
+  updateWebcamSize(180); updateWebcamOpacity(100);
+  setWebcamPreset('bottom-right', document.querySelector('[data-pos=\"bottom-right\"]'));
+  setWebcamStyle('rounded', document.querySelector('.wc-style-btn'));
+}
+
+/* DRAG + RESIZE HANDLERS */
+let isDragging=false,isResizing=false,dragStartX=0,dragStartY=0,origLeft=0,origTop=0,origW=0,origH=0;
+function initWebcamDrag(){
+  const frame=document.getElementById('webcam-frame');
+  const handle=document.getElementById('wf-drag-handle');
+  const resizeH=document.getElementById('wf-resize-handle');
+  const player=document.getElementById('player');
+  if(!frame||!handle) return;
+  function getPos(e){ const r=player.getBoundingClientRect(); const src=e.touches?e.touches[0]:e; return {x: src.clientX - r.left, y: src.clientY - r.top}; }
+  handle.addEventListener('mousedown', (e)=>{
+    e.stopPropagation(); e.preventDefault();
+    isDragging=true; frame.classList.add('dragging');
+    const p=getPos(e); const rect=frame.getBoundingClientRect(); const pr=player.getBoundingClientRect();
+    dragStartX=p.x; dragStartY=p.y; origLeft=rect.left-pr.left; origTop=rect.top-pr.top;
+    frame.style.right='auto'; frame.style.bottom='auto'; frame.style.transform='none';
+  });
+  handle.addEventListener('touchstart', (e)=>{
+    e.stopPropagation();
+    isDragging=true; frame.classList.add('dragging');
+    const p=getPos(e); const rect=frame.getBoundingClientRect(); const pr=player.getBoundingClientRect();
+    dragStartX=p.x; dragStartY=p.y; origLeft=rect.left-pr.left; origTop=rect.top-pr.top;
+    frame.style.right='auto'; frame.style.bottom='auto'; frame.style.transform='none';
+  }, {passive:false});
+  resizeH.addEventListener('mousedown', (e)=>{
+    e.stopPropagation(); e.preventDefault();
+    isResizing=true; frame.classList.add('dragging');
+    const p=getPos(e); dragStartX=p.x; dragStartY=p.y; origW=frame.offsetWidth; origH=frame.offsetHeight;
+  });
+  resizeH.addEventListener('touchstart', (e)=>{
+    e.stopPropagation();
+    isResizing=true; frame.classList.add('dragging');
+    const p=getPos(e); dragStartX=p.x; dragStartY=p.y; origW=frame.offsetWidth; origH=frame.offsetHeight;
+  }, {passive:false});
+  window.addEventListener('mousemove', (e)=>{
+    if(!isDragging && !isResizing) return;
+    const p=getPos(e);
+    if(isDragging){
+      let newLeft=origLeft + (p.x - dragStartX);
+      let newTop=origTop + (p.y - dragStartY);
+      newLeft=Math.max(0, Math.min(newLeft, player.clientWidth - frame.offsetWidth));
+      newTop=Math.max(0, Math.min(newTop, player.clientHeight - frame.offsetHeight));
+      frame.style.left=newLeft+'px'; frame.style.top=newTop+'px';
+    }
+    if(isResizing){
+      let dw=p.x - dragStartX;
+      let newW=Math.max(100, Math.min(origW+dw, player.clientWidth*0.9));
+      frame.style.width=newW+'px'; frame.style.height=Math.round(newW*0.66)+'px';
+      document.getElementById('wc-size-slider').value=Math.round(newW);
+      document.getElementById('wc-size-val').textContent=Math.round(newW)+'px';
+    }
+  });
+  window.addEventListener('touchmove', (e)=>{
+    if(!isDragging && !isResizing) return;
+    e.preventDefault();
+    const p=getPos(e);
+    if(isDragging){
+      let newLeft=origLeft + (p.x - dragStartX);
+      let newTop=origTop + (p.y - dragStartY);
+      newLeft=Math.max(0, Math.min(newLeft, player.clientWidth - frame.offsetWidth));
+      newTop=Math.max(0, Math.min(newTop, player.clientHeight - frame.offsetHeight));
+      frame.style.left=newLeft+'px'; frame.style.top=newTop+'px';
+    }
+    if(isResizing){
+      let dw=p.x - dragStartX;
+      let newW=Math.max(100, Math.min(origW+dw, player.clientWidth*0.9));
+      frame.style.width=newW+'px'; frame.style.height=Math.round(newW*0.66)+'px';
+    }
+  }, {passive:false});
+  window.addEventListener('mouseup', ()=>{
+    if(isDragging||isResizing){ frame.classList.remove('dragging'); }
+    isDragging=false; isResizing=false;
+  });
+  window.addEventListener('touchend', ()=>{
+    frame.classList.remove('dragging'); isDragging=false; isResizing=false;
+  });
+  // Mostrar controles quando webcam aparece
+  const obs=new MutationObserver(()=>{
+    if(frame.style.display!=='none' && frame.style.display!==''){ document.getElementById('webcam-controls').classList.add('active'); }
+  });
+  obs.observe(frame, {attributes:true, attributeFilter:['style']});
+}
+
+/* PERSONALIZAÇÃO GERAL */
+function updateLiveTitle(val){ document.getElementById('live-title').textContent=val||'LIVE - Sem título'; try{localStorage.setItem('live-title',val)}catch(e){} }
+function updateTickerText(val){ document.getElementById('stream-ticker-text').textContent=val; try{localStorage.setItem('ticker',val)}catch(e){} }
+function setTheme(theme,btn){
+  document.querySelectorAll('#personalization-panel .wc-preset-btn').forEach(b=>{ if(b.textContent.includes('Escuro')||b.textContent.includes('Claro')) b.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  if(theme==='light'){
+    document.documentElement.style.setProperty('--bg-primary','#f8f9fa');
+    document.documentElement.style.setProperty('--bg-secondary','#ffffff');
+    document.documentElement.style.setProperty('--bg-elevated','#e9ecef');
+    document.documentElement.style.setProperty('--bg-hover','#dee2e6');
+    document.documentElement.style.setProperty('--text-primary','#0f0f0f');
+    document.documentElement.style.setProperty('--text-secondary','#606060');
+    document.documentElement.style.setProperty('--border','rgba(0,0,0,0.1)');
+    document.body.style.background='#f8f9fa'; document.body.style.color='#0f0f0f';
+  } else {
+    document.documentElement.style.setProperty('--bg-primary','#0f0f0f');
+    document.documentElement.style.setProperty('--bg-secondary','#121212');
+    document.documentElement.style.setProperty('--bg-elevated','#1f1f1f');
+    document.documentElement.style.setProperty('--bg-hover','#272727');
+    document.documentElement.style.setProperty('--text-primary','#f1f1f1');
+    document.documentElement.style.setProperty('--text-secondary','#aaaaaa');
+    document.documentElement.style.setProperty('--border','rgba(255,255,255,0.1)');
+    document.body.style.background='var(--bg-primary)'; document.body.style.color='var(--text-primary)';
+  }
+  try{localStorage.setItem('theme',theme)}catch(e){}
+  toast('Tema: '+theme,'#3ea6ff');
+}
+function setChatFontSize(size,btn){
+  const body=document.getElementById('chat-body');
+  document.querySelectorAll('#personalization-panel .wc-preset-btn').forEach(b=>{ if(['A-','A','A+'].includes(b.textContent.trim())) b.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  if(size==='small'){ body.style.fontSize='12px'; }
+  else if(size==='large'){ body.style.fontSize='15px'; }
+  else{ body.style.fontSize='13px'; }
+  try{localStorage.setItem('chat-size',size)}catch(e){}
+}
+let chatDensity=0;
+function adjustChatDensity(dir){
+  chatDensity=Math.max(-2, Math.min(2, chatDensity+dir));
+  const labels=['Muito menos','Menos','Normal','Mais','Muito mais'];
+  document.getElementById('chat-density-val').textContent=labels[chatDensity+2];
+  if(dir>0){ for(let i=0;i<3;i++) setTimeout(()=>addRandomChat(true), i*200); }
+  if(chatI){ clearInterval(chatI); const base=1200; const factor= chatDensity===-2? 2.5 : chatDensity===-1? 1.6 : chatDensity===0?1: chatDensity===1?0.55:0.3; chatI=setInterval(()=>addRandomChat(true), base*factor); }
+  toast('Densidade chat: '+labels[chatDensity+2],'#3ea6ff');
+}
+function togglePersonalizationPanel(){
+  const b=document.getElementById('personalization-body');
+  const isHidden=b.style.display==='none';
+  b.style.display=isHidden?'block':'none';
+}
 
 /* CANVAS HIGH DPI & DYNAMIC SCENES */
 let canvasCtx, confettiCtx, likeRainCtx, emojiCtx, canvasW, canvasH;
@@ -2517,7 +2873,25 @@ function handleCompanionMessage(msg){
         mobilePeerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(()=>{});
       }
       break;
+
+    case 'mobile-control':
+      handleMobileControl(msg.action, msg.data);
+      break;
   }
+}
+
+function handleMobileControl(action, data){
+  switch(action){
+    case 'scene': setStreamScene(data); break;
+    case 'sound': playSoundEffect(data); break;
+    case 'gift': sendVirtualGift(data.name, data.price, data.emoji); break;
+    case 'pix': triggerLivePixEvent(data.name, data.amount, data.msg, data.pitch); break;
+    case 'like': likeVideo(); spawnFloatingEmoji('❤️'); break;
+    case 'filter': cycleVideoFilter(); break;
+    case 'hype': boostViews(); break;
+    default: break;
+  }
+  toast('📱 Controle remoto: '+action,'#3ea6ff');
 }
 
 function setCompanionStatus(connected, text){
@@ -2618,7 +2992,7 @@ function broadcastStatsToMobile(){
   if(!companionWs || companionWs.readyState !== WebSocket.OPEN) return;
   companionWs.send(JSON.stringify({
     type: 'host-stats-update',
-    payload: { viewers, likes, totalViews, newSubs, totalDonationAmount, isLive }
+    payload: { viewers, likes, totalViews, newSubs, totalDonationAmount, isLive, hypeLevel: hypeTrainLevel, hypeProgress: Math.round(hypeTrainProgress) }
   }));
 }
 
@@ -2635,6 +3009,15 @@ for(let i=0; i<15; i++){
 chatI = setInterval(()=> addRandomChat(true), chatSpeedMs);
 
 initCanvas();
+initWebcamDrag();
+// Restaurar personalizações salvas
+try{
+  const savedTitle=localStorage.getItem('live-title'); if(savedTitle){ document.getElementById('custom-live-title').value=savedTitle; updateLiveTitle(savedTitle); }
+  const savedTicker=localStorage.getItem('ticker'); if(savedTicker){ document.getElementById('custom-ticker').value=savedTicker; updateTickerText(savedTicker); }
+  const savedTheme=localStorage.getItem('theme'); if(savedTheme) setTheme(savedTheme, null);
+  const savedSize=localStorage.getItem('wc-size'); if(savedSize){ document.getElementById('wc-size-slider').value=savedSize; updateWebcamSize(savedSize); }
+  const savedOpacity=localStorage.getItem('wc-opacity'); if(savedOpacity){ document.getElementById('wc-opacity-slider').value=savedOpacity; updateWebcamOpacity(savedOpacity); }
+}catch(e){}
 updateDisplay();
 animate();
 </script>

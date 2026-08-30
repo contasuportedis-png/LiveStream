@@ -118,6 +118,15 @@ wss.on('connection', (ws) => {
         break;
       }
 
+      // ===== CONTROLE REMOTO: celular controla PC (cena, som, gift, pix, etc) =====
+      case 'mobile-control': {
+        const room = rooms.get(ws.roomCode);
+        if (!room || ws.role !== 'mobile') return;
+        // Encaminha ação do celular para o host
+        send(room.hostWs, { type: 'mobile-control', action: msg.action, data: msg.data });
+        break;
+      }
+
       // ===== WEBRTC SIGNALING: celular manda câmera pro PC =====
       // O celular cria a "offer" (proposta de conexão de vídeo) e manda pro host
       case 'webrtc-offer': {
