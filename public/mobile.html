@@ -191,8 +191,21 @@ body{font-family:'Roboto',sans-serif;background:var(--bg-primary);color:var(--te
 
   <div class="panel" id="controls-panel">
     <div class="controls-panel">
+      <div class="ctrl-section" style="background:linear-gradient(135deg,rgba(255,0,0,0.08),rgba(50,188,173,0.08));border-color:var(--yt-red)">
+        <div class="ctrl-section-title">🔴 Live — Controle Total</div>
+        <div class="ctrl-grid">
+          <button class="ctrl-btn" style="background:var(--yt-red);color:white" onclick="sendControl('live','start')">▶️ Iniciar Live</button>
+          <button class="ctrl-btn" style="background:#333;color:white" onclick="sendControl('live','stop')">⏹️ Encerrar</button>
+          <button class="ctrl-btn" onclick="sendControl('mute')">🔇 Mutar/Desmutar</button>
+          <button class="ctrl-btn" onclick="sendControl('clearChat')">🗑️ Limpar Chat</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <input type="text" id="mobile-live-title" placeholder="Título da live..." value="LIVE - Jogando e conversando!" style="flex:1;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;color:white;font-size:12px">
+          <button class="ctrl-btn" style="flex:0 0 70px" onclick="sendTitle()">✏️ Título</button>
+        </div>
+      </div>
       <div class="ctrl-section">
-        <div class="ctrl-section-title">🎬 Controlar Live do Celular</div>
+        <div class="ctrl-section-title">🎬 Cenas & Filtros</div>
         <div class="ctrl-grid">
           <button class="ctrl-btn scene" onclick="sendControl('scene','gaming')">🎮 Jogo</button>
           <button class="ctrl-btn scene" onclick="sendControl('scene','chatting')">🎙️ Chatting</button>
@@ -444,6 +457,12 @@ function sendPix(){
   const msg=document.getElementById('mobile-pix-msg').value.trim()||'Salve!';
   sendControl('pix', {name, amount, msg, pitch:'normal'});
   addSystemMsg('⚡ PIX de R$ '+amount+' enviado! Aguarde o som no PC.');
+}
+function sendTitle(){
+  const title=document.getElementById('mobile-live-title').value.trim();
+  if(!title){ alert('Digite um título'); return; }
+  sendControl('title', title);
+  addSystemMsg('✏️ Título alterado para: '+title);
 }
 
 /* ===== TABS ===== */
