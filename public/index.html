@@ -1870,6 +1870,11 @@ function drawPreviewScene(){
 }
 function transitionToProgram(){
   if(!studioMode){ toast('Ative Modo Estúdio primeiro',' #ff6b6b'); return; }
+  // Se ainda não está ao vivo, Transição = Iniciar Live (sai da tela de espera e começa chat)
+  if(!isLive){
+    startLive();
+    toast('🔄 Transição: Live iniciada! Tela de espera → AO VIVO','#2ba640');
+  }
   // Copia preview para program (player principal)
   setStreamScene(previewScene);
   // Copia webcam preview se houver
@@ -1881,6 +1886,8 @@ function transitionToProgram(){
     document.getElementById('cam-placeholder').style.display='none';
     document.getElementById('live-canvas').style.display='none';
   }
+  // Copia título/subtítulo da preview se foi editado (waiting)
+  const previewTitle=document.getElementById('preview-canvas')?.dataset?.title;
   toast('🔄 Transição feita! Programa atualizado','#2ba640');
   // Feedback visual
   const prog=document.getElementById('player');
@@ -2527,7 +2534,7 @@ function updateWaitingMusic(url){
   const embed=document.getElementById('waiting-embed');
   const note=document.getElementById('waiting-music-note');
   // Limpa anteriores
-  audio.pause(); audio.removeAttribute('src'); embed.innerHTML=''; embed.style.display='none';
+  audio.pause(); audio.removeAttribute('src'); embed.innerHTML=''; embed.style.display='none'; embed.style.cssText='display:none';
   if(!url || !url.trim()){
     if(note) note.style.display='none';
     try{localStorage.setItem('waiting-music',url)}catch(e){}
@@ -2538,26 +2545,32 @@ function updateWaitingMusic(url){
   const spotifyMatch=url.match(/open\.spotify\.com\/(track|playlist|album)\/([a-zA-Z0-9]+)/);
   if(spotifyMatch){
     const type=spotifyMatch[1], id=spotifyMatch[2];
-    embed.innerHTML='<iframe src="https://open.spotify.com/embed/'+type+'/'+id+'?utm_source=generator&autoplay=1&loop=1" width="100%" height="100%" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;opacity:0.6"></iframe>';
-    embed.style.display='block'; if(note){ note.style.display='block'; note.innerHTML='🎵 Spotify tocando'; }
-    toast('🎵 Spotify embed carregado!',' #1DB954');
+    embed.innerHTML='<div style="position:relative;width:100%;height:100%"><iframe src="https://open.spotify.com/embed/'+type+'/'+id+'?utm_source=generator" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" style="border-radius:12px"></iframe><button onclick="document.getElementById(\'waiting-embed\').style.display=\'none\'; document.getElementById(\'waiting-embed\').innerHTML=\'\';" style="position:absolute;top:-8px;right:-8px;background:#ff0000;color:white;border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:12px">✕</button><div style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,0.7);color:white;font-size:10px;padding:2px 6px;border-radius:4px">↔ arraste para mover • ↕︎ redimensione</div></div>';
+    embed.style.cssText='display:block;position:absolute;bottom:16px;right:16px;width:340px;height:170px;z-index:5;background:rgba(0,0,0,0.8);border-radius:12px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.15);resize:both;overflow:hidden;';
+    embed.classList.add('overlay-draggable');
+    if(note){ note.style.display='block'; note.innerHTML='🎵 Spotify — arraste para mover, redimensione no canto'; }
+    toast('🎵 Spotify mini-player! Arraste para mover',' #1DB954');
     try{localStorage.setItem('waiting-music',url)}catch(e){}
+    makeWaitingEmbedDraggable();
     return;
   }
   // YouTube: youtube.com/watch?v=xxx , youtu.be/xxx , youtube.com/embed/xxx
   const ytMatch=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
   if(ytMatch){
     const id=ytMatch[1];
-    embed.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1&loop=1&playlist='+id+'&controls=0&mute=0&rel=0" width="100%" height="100%" frameborder="0" allow="autoplay; encrypted-media" style="position:absolute;inset:0;width:100%;height:100%;opacity:0.5"></iframe>';
-    embed.style.display='block'; if(note){ note.style.display='block'; note.innerHTML='🎵 YouTube tocando'; }
-    toast('🎵 YouTube embed carregado!',' #ff0000');
+    embed.innerHTML='<div style="position:relative;width:100%;height:100%"><iframe src="https://www.youtube.com/embed/'+id+'?autoplay=0&controls=1&rel=0" width="100%" height="100%" frameborder="0" allow="encrypted-media" style="border-radius:12px;width:100%;height:100%"></iframe><button onclick="document.getElementById(\'waiting-embed\').style.display=\'none\'; document.getElementById(\'waiting-embed\').innerHTML=\'\';" style="position:absolute;top:-8px;right:-8px;background:#ff0000;color:white;border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:12px;z-index:10">✕</button></div>';
+    embed.style.cssText='display:block;position:absolute;bottom:16px;right:16px;width:360px;height:200px;z-index:5;background:#000;border-radius:12px;overflow:hidden;padding:0;box-shadow:0 8px 24px rgba(0,0,0,0.6);border:2px solid rgba(255,255,255,0.15);resize:both;overflow:hidden;';
+    embed.classList.add('overlay-draggable');
+    if(note){ note.style.display='block'; note.innerHTML='🎵 YouTube mini-player — arraste/redimensione'; }
+    toast('🎵 YouTube mini-player! Não ocupa tela toda',' #ff0000');
     try{localStorage.setItem('waiting-music',url)}catch(e){}
+    makeWaitingEmbedDraggable();
     return;
   }
   // MP3 direto
   if(url.match(/^https?:\/\/.+\.(mp3|wav|ogg|m4a)(\?.*)?$/i)){
     audio.src=url; audio.volume=0.35; audio.play().catch(()=>{});
-    if(note){ note.style.display='block'; note.innerHTML='🎵 Música MP3 tocando'; }
+    if(note){ note.style.display='block'; note.innerHTML='🎵 Música MP3 tocando <button onclick="document.getElementById(\'waiting-audio\').pause(); this.parentElement.style.display=\'none\'" style="margin-left:8px;background:rgba(255,255,255,0.15);border:none;color:white;padding:2px 6px;border-radius:4px;cursor:pointer;font-size:10px">⏹️ Parar</button>'; }
     toast('🎵 Música MP3 carregada!',' #2ba640');
     try{localStorage.setItem('waiting-music',url)}catch(e){}
     return;
@@ -2566,6 +2579,29 @@ function updateWaitingMusic(url){
   audio.src=url; audio.volume=0.35; audio.play().catch(()=> toast('Link não reconhecido. Tente MP3 direto, Spotify ou YouTube.',' #ff6b6b'));
   if(note) note.style.display='block';
   try{localStorage.setItem('waiting-music',url)}catch(e){}
+}
+let waitingEmbedDrag=false, wDragX=0, wDragY=0, wOrigL=0, wOrigT=0;
+function makeWaitingEmbedDraggable(){
+  const el=document.getElementById('waiting-embed');
+  const player=document.getElementById('player');
+  if(!el || el.dataset.dragInit) return;
+  el.dataset.dragInit='1';
+  el.addEventListener('mousedown', (e)=>{
+    if(e.target.tagName==='IFRAME' || e.target.tagName==='BUTTON') return;
+    waitingEmbedDrag=true; el.classList.add('dragging');
+    const rect=el.getBoundingClientRect(); const pr=player.getBoundingClientRect();
+    wDragX=e.clientX; wDragY=e.clientY; wOrigL=rect.left-pr.left; wOrigT=rect.top-pr.top;
+    el.style.right='auto'; el.style.bottom='auto';
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e)=>{
+    if(!waitingEmbedDrag) return;
+    const nl=wOrigL + (e.clientX-wDragX);
+    const nt=wOrigT + (e.clientY-wDragY);
+    el.style.left=Math.max(0, Math.min(nl, player.clientWidth - el.offsetWidth))+'px';
+    el.style.top=Math.max(0, Math.min(nt, player.clientHeight - el.offsetHeight))+'px';
+  });
+  window.addEventListener('mouseup', ()=>{ waitingEmbedDrag=false; el.classList.remove('dragging'); });
 }
 function toggleWaitingMusic(){
   const audio=document.getElementById('waiting-audio');
@@ -3202,6 +3238,11 @@ function startLive(){
   studioI=setInterval(updateStudioMetrics,2000);
   retentionHistory=[];
 
+  // Chat só agora começa — antes ficava só welcome, agora popula e inicia
+  for(let i=0;i<12;i++) setTimeout(()=>addRandomChat(true), i*180);
+  if(chatI) clearInterval(chatI);
+  chatI=setInterval(()=> addRandomChat(true), chatSpeedMs);
+
   updateDisplay();
   updateStudioMetrics();
   toast('Live iniciada!','#ff6b6b');
@@ -3211,7 +3252,7 @@ function stopLive(){
   if(!isLive)return;
   playStopSound();isLive=false;
   clearInterval(timerI);clearInterval(viewersI);
-  clearInterval(statsI);clearInterval(notifI);clearInterval(sci);clearInterval(pixI);clearInterval(joinI);clearInterval(viralI);clearInterval(studioI);
+  clearInterval(statsI);clearInterval(notifI);clearInterval(sci);clearInterval(pixI);clearInterval(joinI);clearInterval(viralI);clearInterval(studioI);clearInterval(chatI);
   document.body.classList.remove('live-started');
   document.getElementById('waiting-screen').style.display='flex';
 
@@ -4054,14 +4095,10 @@ function broadcastStatsToMobile(){
 // Conecta ao servidor assim que a página carrega, para já ter um código pronto
 connectCompanionSocket();
 
-// INITIAL PRE-POPULATE CHAT COMMENTS IMMEDIATELY ON LOAD
-addSys('Bem-vindo ao Chat ao Vivo!');
-for(let i=0; i<15; i++){
-  addRandomChat(true);
-}
-
-// START CONTINUOUS CHAT GENERATION IMMEDIATELY
-chatI = setInterval(()=> addRandomChat(true), chatSpeedMs);
+// Chat inicial: só boas-vindas, comentários reais só após Iniciar Live (controle estúdio)
+addSys('Bem-vindo ao Chat ao Vivo! Aguardando live começar...');
+addSys('💡 Dica: use Modo Estúdio para preparar tudo e clique Iniciar Live quando quiser que o chat comece');
+// Chat só começa após live — não inicia aqui (ver startLive)
 
 initCanvas();
 initWebcamDrag();
