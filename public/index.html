@@ -1081,6 +1081,44 @@ body.chat-bottom.chat-hidden .chat-panel{ display:none !important; }
           <button class="ctrl ctrl-sec" style="width:100%;margin-top:8px;padding:8px" onclick="showWaitingScreen()">👁️ Mostrar / Testar Tela Inicial</button>
         </div>
         <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">📺 Canal — Customização Total</div>
+          <input type="text" id="custom-channel-name" class="form-input" placeholder="Nome do canal" value="Canal do Usuário" oninput="updateChannelName(this.value)" style="margin-bottom:6px">
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <input type="text" id="custom-channel-handle" class="form-input" placeholder="@handle" value="@canaldousuario" oninput="updateChannelHandle(this.value)" style="flex:1">
+            <label style="display:flex;align-items:center;gap:4px;font-size:11px"><input type="checkbox" id="custom-verified" checked onchange="toggleVerified(this.checked)"> ✓ Verificado</label>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <input type="text" id="custom-channel-avatar" class="form-input" placeholder="URL avatar (ex: https://.../foto.jpg)" oninput="updateChannelAvatar(this.value)" style="flex:1">
+            <input type="text" id="custom-channel-subs" class="form-input" placeholder="Inscritos (ex: 1,2M)" value="1,2 mi de inscritos" oninput="updateChannelSubs(this.value)" style="flex:1">
+          </div>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">🎨 Lower Third + Meta</div>
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <label style="font-size:11px;display:flex;align-items:center;gap:4px">Cor ticker <input type="color" id="ticker-color" value="#ff0000" onchange="updateTickerColor(this.value)" style="width:32px;height:24px;padding:0;border:none"></label>
+            <label style="font-size:11px;display:flex;align-items:center;gap:4px">Velocidade <input type="range" id="ticker-speed" min="10" max="40" value="22" oninput="updateTickerSpeed(this.value)" style="width:80px"></label>
+          </div>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="custom-goal-target" class="form-input" placeholder="Meta (ex: 2000000)" oninput="updateGoalTarget(this.value)" style="flex:1">
+            <button class="ctrl ctrl-sec" style="padding:8px;font-size:11px" onclick="updateGoal()">↻ Atualizar meta</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">🎙️ Soundboard — Sons Custom</div>
+          <div style="display:flex;gap:6px">
+            <label style="flex:1;font-size:11px;display:flex;align-items:center;gap:6px;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;cursor:pointer">📁 Upload MP3 <input type="file" accept="audio/*" style="display:none" onchange="handleCustomSoundUpload(this)"></label>
+            <button class="ctrl ctrl-sec" style="padding:8px;font-size:11px" onclick="playCustomSound()">▶️ Tocar custom</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">Arquivos MP3/WAV curtos funcionam melhor.</div>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">💬 Chat Visual</div>
+          <div style="display:flex;gap:6px">
+            <label style="font-size:11px;display:flex;align-items:center;gap:4px">Fundo <input type="color" id="chat-bg" value="#0f0f0f" onchange="updateChatBg(this.value)" style="width:32px;height:24px"></label>
+            <button class="wc-preset-btn" onclick="toggleChatAnimation()">✨ Animação ON/OFF</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
           <div style="font-size:12px;font-weight:700;margin-bottom:8px">💾 Personalização — Salvar/Carregar</div>
           <div style="display:flex;gap:6px">
             <button class="ctrl ctrl-sec" style="flex:1" onclick="exportConfig()">📥 Exportar JSON</button>
@@ -2490,18 +2528,30 @@ function setWaitingScheduled(val){
 }
 function exportConfig(){
   const cfg={
-    liveTitle: document.getElementById('custom-live-title').value,
-    ticker: document.getElementById('custom-ticker').value,
+    liveTitle: document.getElementById('custom-live-title')?.value||'',
+    ticker: document.getElementById('custom-ticker')?.value||'',
     theme: localStorage.getItem('theme')||'dark',
     chatSize: localStorage.getItem('chat-size')||'normal',
     chatSound: localStorage.getItem('chatSound')||'1',
     chatPos: localStorage.getItem('chatPos')||'right',
+    chatBg: localStorage.getItem('chat-bg')||'#0f0f0f',
     wcSize: localStorage.getItem('wc-size')||'180',
     wcPreset: localStorage.getItem('wc-preset')||'bottom-right',
+    wfTitle: localStorage.getItem('wf-title')||'',
     waitingTitle: localStorage.getItem('waiting-title')||'',
     waitingSubtitle: localStorage.getItem('waiting-subtitle')||'',
     waitingImage: localStorage.getItem('waiting-image')||'',
     waitingVideo: localStorage.getItem('waiting-video')||'',
+    waitingMusic: localStorage.getItem('waiting-music')||'',
+    waitingScheduled: localStorage.getItem('waiting-scheduled')||'',
+    chName: localStorage.getItem('ch-name')||'',
+    chHandle: localStorage.getItem('ch-handle')||'',
+    chAvatar: localStorage.getItem('ch-avatar')||'',
+    chSubs: localStorage.getItem('ch-subs')||'',
+    chVerified: localStorage.getItem('ch-verified')||'1',
+    tickerColor: localStorage.getItem('ticker-color')||'#ff0000',
+    tickerSpeed: localStorage.getItem('ticker-speed')||'22',
+    goalTarget: localStorage.getItem('goal-target')||'2000000',
   };
   const blob=new Blob([JSON.stringify(cfg,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='livestream-config-'+Date.now()+'.json'; a.click();
@@ -2513,15 +2563,27 @@ function importConfig(input){
   reader.onload=(e)=>{
     try{
       const cfg=JSON.parse(e.target.result);
-      if(cfg.liveTitle) { document.getElementById('custom-live-title').value=cfg.liveTitle; updateLiveTitle(cfg.liveTitle); }
-      if(cfg.ticker) { document.getElementById('custom-ticker').value=cfg.ticker; updateTickerText(cfg.ticker); }
+      if(cfg.liveTitle) { const el=document.getElementById('custom-live-title'); if(el) el.value=cfg.liveTitle; updateLiveTitle(cfg.liveTitle); }
+      if(cfg.ticker) { const el=document.getElementById('custom-ticker'); if(el) el.value=cfg.ticker; updateTickerText(cfg.ticker); }
       if(cfg.theme) setTheme(cfg.theme,null);
       if(cfg.chatSize) setChatFontSize(cfg.chatSize,null);
-      if(cfg.wcSize){ document.getElementById('wc-size-slider').value=cfg.wcSize; updateWebcamSize(cfg.wcSize); }
-      if(cfg.waitingTitle){ document.getElementById('custom-waiting-title').value=cfg.waitingTitle; updateWaitingTitle(cfg.waitingTitle); }
-      if(cfg.waitingSubtitle){ document.getElementById('custom-waiting-subtitle').value=cfg.waitingSubtitle; updateWaitingSubtitle(cfg.waitingSubtitle); }
+      if(cfg.wcSize){ const el=document.getElementById('wc-size-slider'); if(el) el.value=cfg.wcSize; updateWebcamSize(cfg.wcSize); }
+      if(cfg.wfTitle){ const el=document.getElementById('webcam-title-input'); if(el) el.value=cfg.wfTitle; updateWebcamTitle(cfg.wfTitle); }
+      if(cfg.chatBg){ const el=document.getElementById('chat-bg'); if(el) el.value=cfg.chatBg; updateChatBg(cfg.chatBg); }
+      if(cfg.tickerColor){ const el=document.getElementById('ticker-color'); if(el) el.value=cfg.tickerColor; updateTickerColor(cfg.tickerColor); }
+      if(cfg.tickerSpeed){ const el=document.getElementById('ticker-speed'); if(el) el.value=cfg.tickerSpeed; updateTickerSpeed(cfg.tickerSpeed); }
+      if(cfg.goalTarget){ const el=document.getElementById('custom-goal-target'); if(el) el.value=cfg.goalTarget; updateGoalTarget(cfg.goalTarget); }
+      if(cfg.chName){ const el=document.getElementById('custom-channel-name'); if(el) el.value=cfg.chName; updateChannelName(cfg.chName); }
+      if(cfg.chHandle){ const el=document.getElementById('custom-channel-handle'); if(el) el.value=cfg.chHandle; updateChannelHandle(cfg.chHandle); }
+      if(cfg.chAvatar){ const el=document.getElementById('custom-channel-avatar'); if(el) el.value=cfg.chAvatar; updateChannelAvatar(cfg.chAvatar); }
+      if(cfg.chSubs){ const el=document.getElementById('custom-channel-subs'); if(el) el.value=cfg.chSubs; updateChannelSubs(cfg.chSubs); }
+      if(cfg.chVerified!==undefined){ const el=document.getElementById('custom-verified'); if(el) el.checked=cfg.chVerified==='1'; toggleVerified(cfg.chVerified==='1'); }
+      if(cfg.waitingTitle){ const el=document.getElementById('custom-waiting-title'); if(el) el.value=cfg.waitingTitle; updateWaitingTitle(cfg.waitingTitle); }
+      if(cfg.waitingSubtitle){ const el=document.getElementById('custom-waiting-subtitle'); if(el) el.value=cfg.waitingSubtitle; updateWaitingSubtitle(cfg.waitingSubtitle); }
       if(cfg.waitingImage) updateWaitingImage(cfg.waitingImage);
       if(cfg.waitingVideo) updateWaitingVideo(cfg.waitingVideo);
+      if(cfg.waitingMusic){ const el=document.getElementById('custom-waiting-music'); if(el) el.value=cfg.waitingMusic; updateWaitingMusic(cfg.waitingMusic); }
+      if(cfg.waitingScheduled){ const el=document.getElementById('waiting-scheduled'); if(el) el.value=cfg.waitingScheduled; setWaitingScheduled(cfg.waitingScheduled); }
       toast('📤 Config importada!',' #2ba640');
     }catch(err){ toast('Erro ao importar: '+err.message,' #ff6b6b'); }
   };
@@ -2531,6 +2593,50 @@ function resetAllCustomization(){
   if(!confirm('Resetar TODA personalização?')) return;
   try{ localStorage.clear(); }catch(e){}
   location.reload();
+}
+function updateChannelName(val){ document.querySelector('.ch-name').childNodes[0].textContent=val+' '; try{localStorage.setItem('ch-name',val)}catch(e){} }
+function updateChannelHandle(val){ const el=document.querySelector('.ch-name span[style*=\"font-size:12px\"]'); if(el) el.textContent=val; try{localStorage.setItem('ch-handle',val)}catch(e){} }
+function toggleVerified(checked){ const el=document.querySelector('.verified-badge'); if(el) el.style.display=checked?'inline-flex':'none'; try{localStorage.setItem('ch-verified',checked?'1':'0')}catch(e){} }
+function updateChannelAvatar(url){
+  const av=document.querySelector('.ch-avatar');
+  if(url && url.trim().match(/^https?:\/\//)){ av.style.background='url('+url.trim()+') center/cover'; av.textContent=''; }
+  else { av.style.background='linear-gradient(135deg,var(--yt-red),#ff6b6b)'; av.textContent=(document.getElementById('custom-channel-name').value||'C')[0]; }
+  try{localStorage.setItem('ch-avatar',url)}catch(e){}
+}
+function updateChannelSubs(val){ document.querySelector('.ch-subs').textContent=val; try{localStorage.setItem('ch-subs',val)}catch(e){} }
+function updateTickerColor(val){ document.getElementById('stream-lower-third').style.background='linear-gradient(90deg, '+val+', rgba(156,39,176,0.9))'; try{localStorage.setItem('ticker-color',val)}catch(e){} }
+function updateTickerSpeed(val){ document.getElementById('stream-ticker-text').style.animationDuration=val+'s'; try{localStorage.setItem('ticker-speed',val)}catch(e){} }
+function updateGoalTarget(val){
+  const n=parseInt(val.replace(/\D/g,''))||2000000;
+  goalTarget=n; document.getElementById('goal-type-lbl').textContent='Meta de Inscritos: '+fmt(n); updateGoal();
+  try{localStorage.setItem('goal-target',val)}catch(e){}
+}
+let customSoundBuffer=null, customSoundUrl=null;
+function handleCustomSoundUpload(input){
+  const file=input.files[0]; if(!file) return;
+  const url=URL.createObjectURL(file);
+  customSoundUrl=url;
+  toast('🔊 Som custom carregado: '+file.name,' #2ba640');
+  try{localStorage.setItem('custom-sound-name', file.name)}catch(e){}
+}
+function playCustomSound(){
+  if(!customSoundUrl){ toast('Carregue um MP3 primeiro',' #ff6b6b'); return; }
+  const audio=new Audio(customSoundUrl); audio.volume=0.8; audio.play().catch(()=>toast('Erro ao tocar',' #ff6b6b'));
+  if(isLive) setTimeout(()=>triggerSoundboardChatReaction('custom'),300);
+}
+function updateChatBg(val){ document.getElementById('chat-body').style.background=val; document.querySelector('.chat-panel').style.background=val; try{localStorage.setItem('chat-bg',val)}catch(e){} }
+let chatAnimationEnabled=true;
+function toggleChatAnimation(){
+  chatAnimationEnabled=!chatAnimationEnabled;
+  const style=document.getElementById('chat-anim-style');
+  if(!chatAnimationEnabled){
+    if(!style){
+      const s=document.createElement('style'); s.id='chat-anim-style'; s.textContent='.cmsg{animation:none !important}'; document.head.appendChild(s);
+    }
+  } else {
+    if(style) style.remove();
+  }
+  toast(chatAnimationEnabled?'✨ Animação ON':'Animação OFF', chatAnimationEnabled?'#2ba640':'#aaa');
 }
 
 /* ===== CHAT PRO: emotes, filtro, comandos, exportar ===== */
@@ -3877,6 +3983,16 @@ try{
   const savedWaitingImage=localStorage.getItem('waiting-image'); if(savedWaitingImage){ const el=document.getElementById('custom-waiting-image'); if(el) el.value=savedWaitingImage; updateWaitingImage(savedWaitingImage); }
   const savedWaitingMusic=localStorage.getItem('waiting-music'); if(savedWaitingMusic){ const el=document.getElementById('custom-waiting-music'); if(el) el.value=savedWaitingMusic; updateWaitingMusic(savedWaitingMusic); }
   const savedWaitingScheduled=localStorage.getItem('waiting-scheduled'); if(savedWaitingScheduled){ const el=document.getElementById('waiting-scheduled'); if(el) el.value=savedWaitingScheduled; }
+  const savedChName=localStorage.getItem('ch-name'); if(savedChName){ document.getElementById('custom-channel-name').value=savedChName; updateChannelName(savedChName); }
+  const savedChHandle=localStorage.getItem('ch-handle'); if(savedChHandle){ document.getElementById('custom-channel-handle').value=savedChHandle; updateChannelHandle(savedChHandle); }
+  const savedChAvatar=localStorage.getItem('ch-avatar'); if(savedChAvatar){ document.getElementById('custom-channel-avatar').value=savedChAvatar; updateChannelAvatar(savedChAvatar); }
+  const savedChSubs=localStorage.getItem('ch-subs'); if(savedChSubs){ document.getElementById('custom-channel-subs').value=savedChSubs; updateChannelSubs(savedChSubs); }
+  const savedChVerified=localStorage.getItem('ch-verified'); if(savedChVerified!==null){ document.getElementById('custom-verified').checked=savedChVerified==='1'; toggleVerified(savedChVerified==='1'); }
+  const savedTickerColor=localStorage.getItem('ticker-color'); if(savedTickerColor){ document.getElementById('ticker-color').value=savedTickerColor; updateTickerColor(savedTickerColor); }
+  const savedTickerSpeed=localStorage.getItem('ticker-speed'); if(savedTickerSpeed){ document.getElementById('ticker-speed').value=savedTickerSpeed; updateTickerSpeed(savedTickerSpeed); }
+  const savedGoalTarget=localStorage.getItem('goal-target'); if(savedGoalTarget){ document.getElementById('custom-goal-target').value=savedGoalTarget; updateGoalTarget(savedGoalTarget); }
+  const savedChatBg=localStorage.getItem('chat-bg'); if(savedChatBg){ document.getElementById('chat-bg').value=savedChatBg; updateChatBg(savedChatBg); }
+  const savedWfTitle=localStorage.getItem('wf-title'); if(savedWfTitle){ document.getElementById('webcam-title-input').value=savedWfTitle; updateWebcamTitle(savedWfTitle); }
   // Restaura overlays visibilidade
   ['stream-lower-third','hype-train-banner','quiz-overlay-banner','pinned-q-banner','redeem-popup','goal-overlay'].forEach(id=>{
     const v=localStorage.getItem('overlay-'+id);
