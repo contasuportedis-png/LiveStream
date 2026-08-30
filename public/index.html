@@ -555,6 +555,36 @@ body.theater-mode .chat-panel{width:100%;min-height:400px;border-left:none;borde
 .chat-input-box:focus-within{ border-color:#3ea6ff; }
 .verified-badge{ width:14px; height:14px; background:#aaa; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#0f0f0f; margin-left:4px; }
 
+/* WAITING SCREEN (TELA INICIAL) */
+.waiting-screen{ position:absolute; inset:0; z-index:4; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(135deg,#0f0f0f 0%,#1a1a2e 50%,#0f0f0f 100%); overflow:hidden; }
+.waiting-bg{ position:absolute; inset:0; background:radial-gradient(circle at 50% 30%, rgba(62,166,255,0.15), transparent 60%), radial-gradient(circle at 80% 80%, rgba(156,39,176,0.12), transparent 50%); }
+.waiting-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.35; }
+.waiting-content{ position:relative; z-index:2; text-align:center; padding:24px; max-width:560px; }
+.waiting-badge{ display:inline-block; background:var(--yt-red); color:white; font-size:11px; font-weight:700; letter-spacing:1.5px; padding:6px 14px; border-radius:var(--radius-full); margin-bottom:16px; animation:livePulse 1.8s infinite; }
+.waiting-title{ font-size:32px; font-weight:900; letter-spacing:-1px; margin-bottom:10px; text-shadow:0 2px 12px rgba(0,0,0,0.5); }
+.waiting-subtitle{ font-size:14px; color:var(--text-secondary); line-height:1.5; margin-bottom:18px; }
+.waiting-countdown{ background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius-md); padding:12px 20px; display:inline-flex; align-items:center; gap:10px; margin-bottom:18px; backdrop-filter:blur(8px); }
+.waiting-countdown-num{ font-size:28px; font-weight:900; font-family:'Roboto Mono',monospace; color:var(--yt-blue); }
+.waiting-countdown-label{ font-size:12px; color:var(--text-secondary); }
+.waiting-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+.waiting-btn{ background:var(--yt-red); color:white; border:none; padding:12px 24px; border-radius:var(--radius-full); font-size:14px; font-weight:700; cursor:pointer; }
+.waiting-btn-secondary{ background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2); padding:12px 24px; border-radius:var(--radius-full); font-size:14px; cursor:pointer; backdrop-filter:blur(6px); }
+.waiting-music-note{ position:absolute; bottom:14px; left:50%; transform:translateX(-50%); font-size:11px; color:var(--text-tertiary); background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:var(--radius-full); backdrop-filter:blur(6px); }
+body.live-started .waiting-screen{ display:none; }
+
+/* CHAT POSITION VARIANTS */
+body.chat-left .main{ flex-direction:row-reverse; }
+body.chat-left .chat-panel{ border-left:none; border-right:1px solid var(--border); }
+body.chat-bottom .main{ flex-direction:column; }
+body.chat-bottom .chat-panel{ width:100%; min-height:320px; border-left:none; border-top:1px solid var(--border); flex-direction:column; }
+body.chat-hidden .chat-panel{ display:none !important; }
+/* OVERLAY DRAGGABLE HELPERS */
+.overlay-draggable{ cursor:move; touch-action:none; user-select:none; }
+.overlay-draggable.dragging{ opacity:0.85; box-shadow:0 8px 24px rgba(0,0,0,0.6); }
+
+/* CUSTOM SCROLLBAR YOUTUBE */
+::-webkit-scrollbar-thumb:hover{ background:#888; }
+
 @media(max-width:1200px){.chat-panel{display:none}}
 @media(max-width:768px){.header-center,.sidebar{display:none}.stats-grid{grid-template-columns:repeat(2,1fr)}.content{padding:12px}}
 </style>
@@ -676,6 +706,26 @@ body.theater-mode .chat-panel{width:100%;min-height:400px;border-left:none;borde
         <div class="pix-alert-amt" id="pix-amt">R$ 25,00</div>
         <div class="pix-alert-msg" id="pix-msg">"Manda um salve pra galera de São Paulo!"</div>
         <div class="pix-speaking-indicator">🔊 Lendo mensagem ao vivo...</div>
+      </div>
+
+      <!-- TELA INICIAL / WAITING SCREEN CUSTOMIZÁVEL -->
+      <div class="waiting-screen" id="waiting-screen">
+        <div class="waiting-bg" id="waiting-bg"></div>
+        <video class="waiting-video" id="waiting-video" autoplay loop muted playsinline style="display:none"></video>
+        <div class="waiting-content">
+          <div class="waiting-badge">● EM BREVE • LIVE COMEÇA JÁ</div>
+          <h2 class="waiting-title" id="waiting-title">LIVE COMEÇA EM BREVE</h2>
+          <p class="waiting-subtitle" id="waiting-subtitle">Ajuste sua câmera e microfone, prepare o chat e clique em Iniciar Live!</p>
+          <div class="waiting-countdown" id="waiting-countdown" style="display:none">
+            <span class="waiting-countdown-num" id="waiting-countdown-num">05:00</span>
+            <span class="waiting-countdown-label">para começar</span>
+          </div>
+          <div class="waiting-actions">
+            <button class="waiting-btn" onclick="event.stopPropagation(); startLive()">▶️ Iniciar Live Agora</button>
+            <button class="waiting-btn-secondary" onclick="event.stopPropagation(); document.getElementById('waiting-screen').style.display='none'">Esconder tela inicial</button>
+          </div>
+        </div>
+        <div class="waiting-music-note">🎵 Música de espera: <span id="waiting-music-status">OFF</span> • Ative em 🎧 Som de Fundo</div>
       </div>
 
       <div class="camera-off" id="cam-placeholder">
@@ -916,6 +966,42 @@ body.theater-mode .chat-panel{width:100%;min-height:400px;border-left:none;borde
           <button class="wc-preset-btn" onclick="adjustChatDensity(-1)">− Menos</button>
           <button class="wc-preset-btn" onclick="adjustChatDensity(1)">+ Mais</button>
           <span id="chat-density-val" style="font-size:11px;color:var(--text-tertiary)">Normal</span>
+        </div>
+        <div class="wc-slider-row" style="margin-top:10px"><label style="flex:1;font-size:12px">🔊 Som de comentário</label>
+          <button class="wc-preset-btn active" id="btn-chat-sound" onclick="toggleChatSound()">🔊 ON</button>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">💬 Chat — Posição</div>
+          <div class="wc-presets" style="margin-bottom:8px">
+            <button class="wc-preset-btn active" onclick="setChatPosition('right',this)">→ Direita</button>
+            <button class="wc-preset-btn" onclick="setChatPosition('left',this)">← Esquerda</button>
+            <button class="wc-preset-btn" onclick="setChatPosition('bottom',this)">↓ Embaixo</button>
+            <button class="wc-preset-btn" onclick="setChatPosition('hidden',this)">👁️ Ocultar</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-tertiary)">Mova o chat para onde preferir, ou oculte para só ver o vídeo.</div>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">🎬 Overlays — Mostrar/Ocultar</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <label style="font-size:11px;display:flex;align-items:center;gap:6px"><input type="checkbox" checked onchange="toggleOverlay('stream-lower-third',this.checked)"> Lower Third</label>
+            <label style="font-size:11px;display:flex;align-items:center;gap:6px"><input type="checkbox" checked onchange="toggleOverlay('hype-train-banner',this.checked)"> Hype Train</label>
+            <label style="font-size:11px;display:flex;align-items:center;gap:6px"><input type="checkbox" checked onchange="toggleOverlay('quiz-overlay-banner',this.checked)"> Quiz</label>
+            <label style="font-size:11px;display:flex;align-items:center;gap:6px"><input type="checkbox" checked onchange="toggleOverlay('pinned-q-banner',this.checked)"> Pergunta</label>
+            <label style="font-size:11px;display:flex;align-items:center;gap:6px"><input type="checkbox" checked onchange="toggleOverlay('redeem-popup',this.checked)"> Resgate</label>
+            <label style="font-size:11px;display:flex;align-items:center;gap:6px"><input type="checkbox" checked onchange="toggleOverlay('goal-overlay',this.checked)"> Meta</label>
+          </div>
+          <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">💡 Dica: arraste os banners na tela do player para reposicionar.</div>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">⏳ Tela Inicial (antes da live)</div>
+          <input type="text" id="custom-waiting-title" class="form-input" placeholder="Título da espera" value="LIVE COMEÇA EM BREVE" oninput="updateWaitingTitle(this.value)" style="margin-bottom:6px">
+          <input type="text" id="custom-waiting-subtitle" class="form-input" placeholder="Subtítulo" value="Ajuste sua câmera e microfone..." oninput="updateWaitingSubtitle(this.value)" style="margin-bottom:6px">
+          <input type="text" id="custom-waiting-video" class="form-input" placeholder="URL vídeo MP4 (opcional, ex: https://.../loop.mp4)" oninput="updateWaitingVideo(this.value)" style="margin-bottom:6px">
+          <div class="wc-slider-row"><label style="flex:1;font-size:12px">Countdown</label>
+            <button class="wc-preset-btn" onclick="toggleWaitingCountdown(true)">⏱️ Mostrar</button>
+            <button class="wc-preset-btn active" onclick="toggleWaitingCountdown(false)">Ocultar</button>
+          </div>
+          <button class="ctrl ctrl-sec" style="width:100%;margin-top:8px;padding:8px" onclick="showWaitingScreen()">👁️ Mostrar / Testar Tela Inicial</button>
         </div>
       </div>
     </div>
@@ -1198,55 +1284,73 @@ function speakTTS(text, pitchStyle = 'normal'){
     toast('❌ Seu navegador não suporta voz (TTS). Tente Chrome/Edge.',' #ff6b6b');
     return;
   }
+  // Texto seguro: limpa, limita, evita synthesis-failed por texto vazio/longo
+  text = String(text||'').trim().slice(0, 400);
+  if(!text){ console.warn('[TTS] texto vazio'); return; }
+  // Some browsers falham com emojis/caracteres especiais — remove para TTS
+  const cleanText = text.replace(/[\u{1F600}-\u{1F6FF}\u{2600}-\u{27BF}]/gu, '').trim() || text;
+
   try{
-    // Desbloqueia AudioContext e speechSynthesis no gesto do usuário (Chrome exige)
     if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
     if(window.speechSynthesis.paused) window.speechSynthesis.resume();
     if(!ttsReady) loadTTSVoices();
-    // Cancela fala anterior mas não corta imediatamente se estiver no meio da fila PIX (já cancelado no processPixQueue)
-    // window.speechSynthesis.cancel() já foi chamado antes se necessário
-
+    // Se estiver falando, cancela antes mas com pequeno delay para evitar synthesis-failed por cancel imediato
+    if(window.speechSynthesis.speaking || window.speechSynthesis.pending){
+      window.speechSynthesis.cancel();
+      // Espera 80ms após cancel antes de falar de novo (evita synthesis-failed)
+      setTimeout(()=> speakTTSInternal(cleanText, pitchStyle), 90);
+      return;
+    }
+    speakTTSInternal(cleanText, pitchStyle);
+  }catch(e){ console.warn('[TTS] exception',e); toast('Erro TTS: '+e.message,' #ff6b6b'); }
+}
+function speakTTSInternal(text, pitchStyle){
+  try{
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
     utterance.volume = 1.0;
-    utterance.rate = 0.95;
+    utterance.rate = 0.92;
     utterance.pitch = pitchStyle === 'high' ? 1.35 : pitchStyle === 'low' ? 0.75 : 1.0;
-
-    // Voz pt-BR: tenta pt-BR exato, depois pt, depois default
+    // Tenta voz pt-BR, se falhar deixa sem voz (usa padrão do sistema) — muitas vezes especificar voz errada causa synthesis-failed
     let ptVoice = ttsVoices.find(v => v.lang && v.lang.toLowerCase() === 'pt-br');
     if(!ptVoice) ptVoice = ttsVoices.find(v => v.lang && v.lang.toLowerCase().includes('pt-br'));
     if(!ptVoice) ptVoice = ttsVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
-    // Se não achar pt, pega Google pt-BR se existir
-    if(!ptVoice) ptVoice = ttsVoices.find(v => v.name && v.name.toLowerCase().includes('google') && v.lang.toLowerCase().includes('pt'));
-    if(ptVoice) utterance.voice = ptVoice;
-    else console.warn('[TTS] nenhuma voz pt-BR encontrada, usando padrão. Vozes:', ttsVoices.map(v=>v.lang+'/'+v.name));
-
-    utterance.onstart = ()=>{ console.log('[TTS] falando:', text.slice(0,40)); };
+    if(!ptVoice) ptVoice = ttsVoices.find(v => v.name && /google.*pt|pt.*google/i.test(v.name));
+    if(ptVoice){
+      utterance.voice = ptVoice;
+      utterance.lang = ptVoice.lang; // usa lang da voz para evitar mismatch
+    } else {
+      console.warn('[TTS] sem voz pt-BR, usando voz padrão do sistema. Disponíveis:', ttsVoices.map(v=>v.lang+'/'+v.name).join(', '));
+      // Não define voice, deixa o browser escolher — evita synthesis-failed
+    }
+    utterance.onstart = ()=>{ console.log('[TTS] falando:', text.slice(0,40), 'voz:', utterance.voice? utterance.voice.name:'padrão'); };
     utterance.onend = ()=>{ console.log('[TTS] fim'); };
     utterance.onerror = (e)=>{
       console.warn('[TTS] erro', e.error, e);
-      if(e.error==='not-allowed' || e.error==='audio-busy'){
+      if(e.error==='synthesis-failed'){
+        // Fallback 1: tenta sem voz específica e sem lang, só texto limpo
+        console.warn('[TTS] synthesis-failed, tentando fallback sem voz');
+        toast('⚠️ Voz pt-BR falhou, tentando voz padrão...',' #ff6b6b');
+        setTimeout(()=>{
+          try{
+            const u2=new SpeechSynthesisUtterance(text);
+            u2.volume=1.0; u2.rate=0.92; u2.pitch=utterance.pitch;
+            // Não define lang nem voice
+            u2.onend=()=>console.log('[TTS] fallback fim');
+            u2.onerror=(e2)=>{ console.warn('[TTS] fallback falhou', e2.error); toast('❌ TTS falhou mesmo no fallback. Tente recarregar a página e clicar em Testar voz.',' #ff6b6b'); };
+            window.speechSynthesis.speak(u2);
+          }catch(err2){ console.warn(err2); }
+        }, 200);
+      } else if(e.error==='not-allowed' || e.error==='audio-busy' || e.error==='audio-capture'){
         toast('🔊 Clique na página para liberar o som do PIX!',' #ff6b6b');
       } else if(e.error==='canceled'){
-        // ignorar, foi cancel() proposital
+        // ignorar
       } else {
-        toast('⚠️ Erro TTS: '+e.error,' #ff6b6b');
+        toast('⚠️ Erro TTS: '+e.error + ' — tente Chrome/Edge e verifique volume',' #ff6b6b');
       }
     };
-
-    // Fala IMEDIATAMENTE dentro do gesto do usuário (sem setTimeout que perde o gesto)
     window.speechSynthesis.speak(utterance);
-
-    // Fallback só se realmente não começou (sem voz pode demorar)
-    setTimeout(()=>{
-      if(!window.speechSynthesis.speaking && !window.speechSynthesis.pending && ttsVoices.length===0){
-        console.warn('[TTS] fallback speak sem voz específica');
-        const u2=new SpeechSynthesisUtterance(text);
-        u2.lang='pt-BR'; u2.rate=0.95; u2.pitch=utterance.pitch; u2.volume=1.0;
-        window.speechSynthesis.speak(u2);
-      }
-    }, 600);
-  }catch(e){ console.warn('[TTS] exception',e); toast('Erro TTS: '+e.message,' #ff6b6b'); }
+  }catch(e){ console.warn('[TTS] internal exception',e); }
 }
 // Helper para testar voz manualmente (chamado por botão na UI)
 function testTTSVoice(){
@@ -1894,6 +1998,139 @@ function togglePersonalizationPanel(){
   b.style.display=isHidden?'block':'none';
 }
 
+/* ===== CUSTOMIZAÇÃO EXTRA — SOM, CHAT, OVERLAYS, WAITING ===== */
+let chatSoundEnabled = true;
+function toggleChatSound(){
+  chatSoundEnabled = !chatSoundEnabled;
+  const btn=document.getElementById('btn-chat-sound');
+  if(btn){ btn.textContent = chatSoundEnabled ? '🔊 ON' : '🔇 OFF'; btn.classList.toggle('active', chatSoundEnabled); }
+  toast(chatSoundEnabled ? '🔊 Som de comentário ATIVADO' : '🔇 Som de comentário DESATIVADO', chatSoundEnabled?'#2ba640':'#ff6b6b');
+  try{ localStorage.setItem('chatSound', chatSoundEnabled?'1':'0'); }catch(e){}
+}
+// Sobrescreve playMessageSound para respeitar toggle
+const _origPlayMessageSound = playMessageSound;
+playMessageSound = function(){ if(!chatSoundEnabled) return; _origPlayMessageSound(); };
+
+function setChatPosition(pos, btn){
+  document.body.classList.remove('chat-left','chat-bottom','chat-hidden');
+  document.querySelectorAll('#personalization-panel .wc-preset-btn').forEach(b=>{ if(['→ Direita','← Esquerda','↓ Embaixo','👁️ Ocultar'].some(t=>b.textContent.includes(t))) b.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  if(pos==='left') document.body.classList.add('chat-left');
+  else if(pos==='bottom') document.body.classList.add('chat-bottom');
+  else if(pos==='hidden') document.body.classList.add('chat-hidden');
+  // right é padrão (sem classe)
+  try{ localStorage.setItem('chatPos', pos); }catch(e){}
+  toast('Chat: '+pos,'#3ea6ff');
+  // Recalcula canvas se mudou para bottom
+  setTimeout(()=>{ initCanvas(); if(viewerHistory.length) drawViewerGraph(); }, 250);
+}
+function toggleOverlay(id, show){
+  const el=document.getElementById(id);
+  if(!el) return;
+  // Para overlays que usam display:flex, mantém flex quando mostra
+  if(show){
+    // Restaura display original baseado no tipo
+    if(id==='stream-lower-third') el.style.display='flex';
+    else if(id.includes('banner')||id.includes('popup')) el.style.display='flex';
+    else el.style.display='block';
+  } else {
+    el.style.display='none';
+  }
+  try{
+    const key='overlay-'+id;
+    localStorage.setItem(key, show?'1':'0');
+  }catch(e){}
+}
+// Torna overlays arrastáveis no player (lower third, hype, quiz, pinned, redeem, pix)
+function makeOverlayDraggable(id){
+  const el=document.getElementById(id);
+  const player=document.getElementById('player');
+  if(!el||!player) return;
+  let isDrag=false, startX=0, startY=0, origL=0, origT=0;
+  el.classList.add('overlay-draggable');
+  // Evita arrastar quando clica em botão fechar
+  el.addEventListener('mousedown', (e)=>{
+    if(e.target.closest('button')) return;
+    isDrag=true; el.classList.add('dragging');
+    const rect=el.getBoundingClientRect(); const pr=player.getBoundingClientRect();
+    startX=e.clientX; startY=e.clientY; origL=rect.left-pr.left; origT=rect.top-pr.top;
+    el.style.right='auto'; el.style.bottom='auto'; el.style.left=origL+'px'; el.style.top=origT+'px'; el.style.transform='none';
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e)=>{
+    if(!isDrag) return;
+    let nl=origL + (e.clientX-startX);
+    let nt=origT + (e.clientY-startY);
+    nl=Math.max(0, Math.min(nl, player.clientWidth - el.offsetWidth));
+    nt=Math.max(0, Math.min(nt, player.clientHeight - el.offsetHeight));
+    el.style.left=nl+'px'; el.style.top=nt+'px';
+  });
+  window.addEventListener('mouseup', ()=>{ if(isDrag) el.classList.remove('dragging'); isDrag=false; });
+  // Touch
+  el.addEventListener('touchstart', (e)=>{
+    if(e.target.closest('button')) return;
+    const t=e.touches[0];
+    isDrag=true; el.classList.add('dragging');
+    const rect=el.getBoundingClientRect(); const pr=player.getBoundingClientRect();
+    startX=t.clientX; startY=t.clientY; origL=rect.left-pr.left; origT=rect.top-pr.top;
+    el.style.right='auto'; el.style.bottom='auto'; el.style.left=origL+'px'; el.style.top=origT+'px'; el.style.transform='none';
+  }, {passive:false});
+  window.addEventListener('touchmove', (e)=>{
+    if(!isDrag) return; const t=e.touches[0];
+    let nl=origL + (t.clientX-startX);
+    let nt=origT + (t.clientY-startY);
+    nl=Math.max(0, Math.min(nl, player.clientWidth - el.offsetWidth));
+    nt=Math.max(0, Math.min(nt, player.clientHeight - el.offsetHeight));
+    el.style.left=nl+'px'; el.style.top=nt+'px';
+  }, {passive:false});
+  window.addEventListener('touchend', ()=>{ el.classList.remove('dragging'); isDrag=false; });
+}
+
+// WAITING SCREEN
+let waitingCountdownInterval=null;
+let waitingCountdownSec=300;
+function updateWaitingTitle(val){ document.getElementById('waiting-title').textContent=val||'LIVE COMEÇA EM BREVE'; try{localStorage.setItem('waiting-title',val)}catch(e){} }
+function updateWaitingSubtitle(val){ document.getElementById('waiting-subtitle').textContent=val||''; try{localStorage.setItem('waiting-subtitle',val)}catch(e){} }
+function updateWaitingVideo(url){
+  const vid=document.getElementById('waiting-video');
+  const bg=document.getElementById('waiting-bg');
+  if(url && url.trim().match(/^https?:\/\/.+\.(mp4|webm|ogg)(\?.*)?$/i)){
+    vid.src=url.trim(); vid.style.display='block'; bg.style.display='none';
+    vid.play().catch(()=>{});
+  } else {
+    vid.pause(); vid.removeAttribute('src'); vid.style.display='none'; bg.style.display='block';
+  }
+  try{localStorage.setItem('waiting-video',url)}catch(e){}
+}
+function toggleWaitingCountdown(show){
+  const el=document.getElementById('waiting-countdown');
+  document.querySelectorAll('#personalization-panel .wc-preset-btn').forEach(b=>{ if(b.textContent.includes('Mostrar')||b.textContent.includes('Ocultar')) b.classList.remove('active'); if((show&&b.textContent.includes('Mostrar'))||(!show&&b.textContent.includes('Ocultar'))) b.classList.add('active'); });
+  if(show){
+    el.style.display='inline-flex';
+    waitingCountdownSec=300;
+    updateWaitingCountdownDisplay();
+    if(waitingCountdownInterval) clearInterval(waitingCountdownInterval);
+    waitingCountdownInterval=setInterval(()=>{
+      waitingCountdownSec=Math.max(0, waitingCountdownSec-1);
+      updateWaitingCountdownDisplay();
+      if(waitingCountdownSec<=0){ clearInterval(waitingCountdownInterval); el.innerHTML='<span class="waiting-countdown-num" style="color:#2ba640">AO VIVO!</span>'; }
+    },1000);
+  } else {
+    el.style.display='none';
+    if(waitingCountdownInterval) clearInterval(waitingCountdownInterval);
+  }
+}
+function updateWaitingCountdownDisplay(){
+  const m=Math.floor(waitingCountdownSec/60).toString().padStart(2,'0');
+  const s=(waitingCountdownSec%60).toString().padStart(2,'0');
+  document.getElementById('waiting-countdown-num').textContent=m+':'+s;
+}
+function showWaitingScreen(){
+  document.getElementById('waiting-screen').style.display='flex';
+  document.body.classList.remove('live-started');
+  toast('⏳ Tela inicial mostrada — clique Iniciar Live para começar',' #3ea6ff');
+}
+
 /* CANVAS HIGH DPI & DYNAMIC SCENES */
 let canvasCtx, confettiCtx, likeRainCtx, emojiCtx, canvasW, canvasH;
 let particles=[], confetti=[], likeRain=[], floatingEmojis=[];
@@ -2219,6 +2456,9 @@ function startLive(){
   initAudio();playStartSound();
   isLive=true;liveStartTime=Date.now();elapsedSeconds=0;
   viewers=Math.floor(Math.random()*100)+30;peakViewers=viewers;
+  document.body.classList.add('live-started');
+  document.getElementById('waiting-screen').style.display='none';
+  if(waitingCountdownInterval){ clearInterval(waitingCountdownInterval); waitingCountdownInterval=null; }
 
   document.getElementById('btn-start').disabled=true;
   document.getElementById('btn-stop').disabled=false;
@@ -2258,6 +2498,8 @@ function stopLive(){
   playStopSound();isLive=false;
   clearInterval(timerI);clearInterval(viewersI);
   clearInterval(statsI);clearInterval(notifI);clearInterval(sci);clearInterval(pixI);clearInterval(joinI);clearInterval(viralI);
+  document.body.classList.remove('live-started');
+  document.getElementById('waiting-screen').style.display='flex';
 
   document.querySelectorAll('#chat-body .typing-msg').forEach(el => el.remove());
   document.getElementById('viral-moment-banner').classList.remove('show');
@@ -3089,6 +3331,8 @@ chatI = setInterval(()=> addRandomChat(true), chatSpeedMs);
 
 initCanvas();
 initWebcamDrag();
+// Overlays arrastáveis
+['stream-lower-third','hype-train-banner','quiz-overlay-banner','pinned-q-banner','redeem-popup','pix-popup','goal-overlay'].forEach(id=>{ try{ makeOverlayDraggable(id); }catch(e){} });
 // Restaurar personalizações salvas
 try{
   const savedTitle=localStorage.getItem('live-title'); if(savedTitle){ document.getElementById('custom-live-title').value=savedTitle; updateLiveTitle(savedTitle); }
@@ -3096,6 +3340,16 @@ try{
   const savedTheme=localStorage.getItem('theme'); if(savedTheme) setTheme(savedTheme, null);
   const savedSize=localStorage.getItem('wc-size'); if(savedSize){ document.getElementById('wc-size-slider').value=savedSize; updateWebcamSize(savedSize); }
   const savedOpacity=localStorage.getItem('wc-opacity'); if(savedOpacity){ document.getElementById('wc-opacity-slider').value=savedOpacity; updateWebcamOpacity(savedOpacity); }
+  const savedChatSound=localStorage.getItem('chatSound'); if(savedChatSound==='0'){ chatSoundEnabled=false; const b=document.getElementById('btn-chat-sound'); if(b){ b.textContent='🔇 OFF'; b.classList.remove('active'); } }
+  const savedChatPos=localStorage.getItem('chatPos'); if(savedChatPos) setChatPosition(savedChatPos, null);
+  const savedWaitingTitle=localStorage.getItem('waiting-title'); if(savedWaitingTitle){ document.getElementById('custom-waiting-title').value=savedWaitingTitle; updateWaitingTitle(savedWaitingTitle); }
+  const savedWaitingSub=localStorage.getItem('waiting-subtitle'); if(savedWaitingSub){ document.getElementById('custom-waiting-subtitle').value=savedWaitingSub; updateWaitingSubtitle(savedWaitingSub); }
+  const savedWaitingVideo=localStorage.getItem('waiting-video'); if(savedWaitingVideo){ document.getElementById('custom-waiting-video').value=savedWaitingVideo; updateWaitingVideo(savedWaitingVideo); }
+  // Restaura overlays visibilidade
+  ['stream-lower-third','hype-train-banner','quiz-overlay-banner','pinned-q-banner','redeem-popup','goal-overlay'].forEach(id=>{
+    const v=localStorage.getItem('overlay-'+id);
+    if(v==='0'){ const el=document.getElementById(id); if(el) el.style.display='none'; }
+  });
 }catch(e){}
 updateDisplay();
 animate();
