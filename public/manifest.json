@@ -1,0 +1,22 @@
+{
+  "name": "Live Stream Companion - YouTube Live Simulator",
+  "short_name": "LiveStream",
+  "description": "Simulador de live com segunda tela, chat, webcam e PIX com voz",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#ff0000",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://www.youtube.com/s/desktop/12d6b690/img/favicon_32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "https://www.youtube.com/s/desktop/12d6b690/img/favicon_144x144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    }
+  ]
+}

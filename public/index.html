@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YouTube Live Stream Simulator Master Pro Ultra</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff0000">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -737,7 +740,8 @@ body.chat-hidden .chat-panel{ display:none !important; }
             <button class="waiting-btn-secondary" onclick="event.stopPropagation(); document.getElementById('waiting-screen').style.display='none'">Esconder tela inicial</button>
           </div>
         </div>
-        <div class="waiting-music-note">🎵 Música de espera: <span id="waiting-music-status">OFF</span> • Ative em 🎧 Som de Fundo</div>
+        <audio id="waiting-audio" loop preload="none" style="display:none"></audio>
+        <div class="waiting-music-note">🎵 Música de espera: <span id="waiting-music-status">OFF</span> • Ative em 🎧 Som de Fundo <button class="ctrl ctrl-sec" style="padding:2px 6px;font-size:10px;margin-left:6px" onclick="toggleWaitingMusic()">🎵 Teste</button></div>
       </div>
 
       <div class="camera-off" id="cam-placeholder">
@@ -953,6 +957,7 @@ body.chat-hidden .chat-panel{ display:none !important; }
       </div>
       <div class="wc-style-row" style="margin-top:8px">
         <button class="wc-style-btn" id="btn-neon" onclick="toggleWebcamNeon()">✨ Neon</button>
+        <button class="wc-style-btn" id="btn-gradient" onclick="toggleWebcamGradient()">🌈 Gradiente</button>
         <button class="wc-style-btn" id="btn-chroma" onclick="toggleChromaKey()">🟩 Chroma Key</button>
         <input type="text" id="webcam-title-input" class="form-input" placeholder="Título embaixo da webcam" style="flex:1;font-size:11px" oninput="updateWebcamTitle(this.value)">
       </div>
@@ -1022,6 +1027,7 @@ body.chat-hidden .chat-panel{ display:none !important; }
             </label>
             <button class="ctrl ctrl-sec" style="padding:8px;font-size:11px" onclick="clearWaitingMedia()">🗑️ Limpar mídia</button>
           </div>
+          <input type="text" id="custom-waiting-music" class="form-input" placeholder="URL música MP3 loop (ex: https://.../lofi.mp3)" oninput="updateWaitingMusic(this.value)" style="margin-bottom:6px">
           <div class="wc-slider-row" style="flex-direction:column;align-items:stretch;gap:6px">
             <label style="font-size:11px;color:var(--text-secondary)">Agendar horário (countdown automático)</label>
             <input type="datetime-local" id="waiting-scheduled" class="form-input" onchange="setWaitingScheduled(this.value)">
@@ -1069,6 +1075,9 @@ body.chat-hidden .chat-panel{ display:none !important; }
     <div class="chat-header">
       <div class="chat-title">Chat ao vivo</div>
       <div class="chat-live-count"><span class="dot"></span><span id="chat-viewers">0</span></div>
+    </div>
+    <div id="chat-ranking" style="display:flex;gap:6px;padding:6px 8px;background:linear-gradient(90deg, rgba(255,215,0,0.08), transparent);border-bottom:1px solid var(--border);font-size:11px;color:var(--text-secondary);overflow:hidden;white-space:nowrap">
+      <span>🏆 Top chat:</span><span id="chat-ranking-list">—</span>
     </div>
 
     <div class="chat-controls-bar">
@@ -2002,6 +2011,25 @@ function toggleWebcamNeon(){
     toast('Neon OFF','#aaa');
   }
 }
+let gradientEnabled=false;
+function toggleWebcamGradient(){
+  gradientEnabled=!gradientEnabled;
+  const f=document.getElementById('webcam-frame');
+  const btn=document.getElementById('btn-gradient');
+  if(gradientEnabled){
+    f.style.border='3px solid transparent';
+    f.style.background='linear-gradient(#000,#000) padding-box, linear-gradient(45deg,#ff0000,#ffd700,#00ff00,#3ea6ff,#9c27b0) border-box';
+    f.style.boxShadow='0 0 20px rgba(255,215,0,0.5)';
+    if(btn) btn.classList.add('active');
+    toast('🌈 Gradiente ON','#ffd700');
+  } else {
+    f.style.background='#000';
+    f.style.border='2px solid rgba(255,255,255,0.15)';
+    f.style.boxShadow='var(--shadow-xl)';
+    if(btn) btn.classList.remove('active');
+    toast('Gradiente OFF','#aaa');
+  }
+}
 function toggleChromaKey(){
   chromaEnabled=!chromaEnabled;
   const v=document.getElementById('webcam-video');
@@ -2304,6 +2332,28 @@ function updateWaitingImage(url){
     img.style.display='none'; bg.style.display='block';
   }
   try{localStorage.setItem('waiting-image',url)}catch(e){}
+}
+function updateWaitingMusic(url){
+  const audio=document.getElementById('waiting-audio');
+  const status=document.getElementById('waiting-music-status');
+  if(url && url.trim().match(/^https?:\/\/.+\.(mp3|wav|ogg|m4a)(\?.*)?$/i)){
+    audio.src=url.trim(); audio.volume=0.35; audio.play().catch(()=>{});
+    if(status) status.textContent='ON';
+  } else if(!url){
+    audio.pause(); audio.removeAttribute('src');
+    if(status) status.textContent='OFF';
+  }
+  try{localStorage.setItem('waiting-music',url)}catch(e){}
+}
+function toggleWaitingMusic(){
+  const audio=document.getElementById('waiting-audio');
+  const status=document.getElementById('waiting-music-status');
+  if(audio.paused){
+    if(!audio.src){ audio.src='https://cdn.pixabay.com/download/audio/2022/03/10/audio_9a1a0b1e9e.mp3?filename=lofi-study-112191.mp3'; }
+    audio.volume=0.35; audio.play().then(()=>{ if(status) status.textContent='ON'; toast('🎵 Música ON','#2ba640'); }).catch(()=>toast('Erro música',' #ff6b6b'));
+  } else {
+    audio.pause(); if(status) status.textContent='OFF'; toast('🎵 Música OFF','#aaa');
+  }
 }
 function handleWaitingImageUpload(input){
   const file=input.files[0];
@@ -2988,6 +3038,12 @@ function addChat(name,msg,color,badgeType, rankTitle='', skipMobileBroadcast=fal
   applyChatFilterToMsg(div);
   cb.scrollTop=cb.scrollHeight;
   while(cb.children.length>200)cb.removeChild(cb.firstChild);
+  // Ranking: conta mensagens por usuário
+  if(!window.topChatters) window.topChatters=new Map();
+  window.topChatters.set(name, (window.topChatters.get(name)||0)+1);
+  const sorted=[...window.topChatters.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const rankEl=document.getElementById('chat-ranking-list');
+  if(rankEl) rankEl.innerHTML=sorted.map(([n,c],i)=>`<span style="color:${['#ffd700','#aaa','#cd7f32'][i]}">${i+1}º ${n} (${c})</span>`).join(' • ') || '—';
   playMessageSound();
 
   if(!skipMobileBroadcast && companionWs && companionWs.readyState === WebSocket.OPEN){
@@ -3665,6 +3721,9 @@ try{
   const savedWaitingTitle=localStorage.getItem('waiting-title'); if(savedWaitingTitle){ document.getElementById('custom-waiting-title').value=savedWaitingTitle; updateWaitingTitle(savedWaitingTitle); }
   const savedWaitingSub=localStorage.getItem('waiting-subtitle'); if(savedWaitingSub){ document.getElementById('custom-waiting-subtitle').value=savedWaitingSub; updateWaitingSubtitle(savedWaitingSub); }
   const savedWaitingVideo=localStorage.getItem('waiting-video'); if(savedWaitingVideo){ document.getElementById('custom-waiting-video').value=savedWaitingVideo; updateWaitingVideo(savedWaitingVideo); }
+  const savedWaitingImage=localStorage.getItem('waiting-image'); if(savedWaitingImage){ const el=document.getElementById('custom-waiting-image'); if(el) el.value=savedWaitingImage; updateWaitingImage(savedWaitingImage); }
+  const savedWaitingMusic=localStorage.getItem('waiting-music'); if(savedWaitingMusic){ const el=document.getElementById('custom-waiting-music'); if(el) el.value=savedWaitingMusic; updateWaitingMusic(savedWaitingMusic); }
+  const savedWaitingScheduled=localStorage.getItem('waiting-scheduled'); if(savedWaitingScheduled){ const el=document.getElementById('waiting-scheduled'); if(el) el.value=savedWaitingScheduled; }
   // Restaura overlays visibilidade
   ['stream-lower-third','hype-train-banner','quiz-overlay-banner','pinned-q-banner','redeem-popup','goal-overlay'].forEach(id=>{
     const v=localStorage.getItem('overlay-'+id);
@@ -3673,6 +3732,10 @@ try{
 }catch(e){}
 updateDisplay();
 animate();
+// PWA instalável
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').then(()=>console.log('[PWA] sw registered')).catch(()=>{});
+}
 </script>
 </body>
 </html>
