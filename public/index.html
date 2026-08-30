@@ -760,17 +760,6 @@ body.chat-bottom.chat-hidden .chat-panel{ display:none !important; }
         <p>Escolha Câmera ou Compartilhamento de Tela para transmitir</p>
       </div>
 
-      <div class="cam-btn-wrap" id="cam-btn-wrap">
-        <button class="cam-btn" onclick="event.stopPropagation(); startCameraOnly()">
-          <svg class="icon-sm" viewBox="0 0 24 24" style="fill:white"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.66.07-1s-.03-.68-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.5.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.63c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.63c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.94l.38 2.65c.04.24.24.41.48.41h3.84c.24 0 .43-.17.47-.41l.36-2.54c.61-.25 1.17-.59 1.69-.98l2.39.96c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.63z"/></svg>
-          Usar Câmera
-        </button>
-        <button class="cam-btn-secondary" onclick="event.stopPropagation(); startScreenShare()">
-          <svg class="icon-sm" viewBox="0 0 24 24" style="fill:white"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
-          Compartilhar Tela
-        </button>
-      </div>
-
       <div class="webcam-frame" id="webcam-frame">
         <video id="webcam-video" autoplay playsinline muted></video>
         <div class="wf-label" id="wf-label">Você • arraste para mover</div>
@@ -823,7 +812,24 @@ body.chat-bottom.chat-hidden .chat-panel{ display:none !important; }
         <button class="pctrl-btn tooltip" data-tip="Modo Teatro" onclick="event.stopPropagation(); toggleTheaterMode()"><svg class="icon" viewBox="0 0 24 24"><path d="M19 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 14H5V8h14v12z"/></svg></button>
         <button class="pctrl-btn tooltip" data-tip="Tela Cheia" onclick="event.stopPropagation(); toggleFullscreen()"><svg class="icon" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
       </div>
-    </div>
+      <!-- STUDIO PREVIEW (OBS-like) — só aparece em Modo Estúdio -->
+      <div id="studio-preview" style="display:none;margin-top:14px;border:2px dashed var(--yt-red);border-radius:var(--radius-md);padding:10px;background:rgba(255,0,0,0.04)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;font-weight:700;color:var(--yt-red)">🔴 PREVIEW (você vê — edite aqui)</span>
+          <span style="font-size:11px;color:var(--text-tertiary)">→ clique Transição para atualizar Programa</span>
+        </div>
+        <div class="player-wrap" id="preview-player" style="aspect-ratio:16/9;background:#000;border-radius:var(--radius-md);overflow:hidden;position:relative">
+          <canvas id="preview-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+          <video id="preview-video" autoplay playsinline muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none"></video>
+          <div style="position:absolute;bottom:8px;left:8px;background:var(--yt-red);color:white;font-size:11px;font-weight:700;padding:4px 8px;border-radius:4px">PREVIEW</div>
+          <div style="position:absolute;top:8px;right:8px;display:flex;gap:6px">
+            <button class="ctrl ctrl-sec" style="padding:6px 10px;font-size:11px" onclick="setPreviewScene('gaming')">🎮 Jogo</button>
+            <button class="ctrl ctrl-sec" style="padding:6px 10px;font-size:11px" onclick="setPreviewScene('chatting')">🎙️ Chat</button>
+            <button class="ctrl ctrl-sec" style="padding:6px 10px;font-size:11px" onclick="setPreviewScene('scifi')">🚀 Sci-Fi</button>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text-tertiary)">👁️ Programa (o que o pessoal vê) é o player grande acima — edite na Preview e clique Transição</div>
+      </div>
 
     <div class="video-meta">
       <h1 class="video-title" id="live-title">LIVE - Jogando e conversando com vocês!</h1>
@@ -1129,7 +1135,21 @@ body.chat-bottom.chat-hidden .chat-panel{ display:none !important; }
       </div>
     </div>
 
-    <div class="controls">
+    <div class="controls" style="border-top:2px solid var(--border);padding-top:14px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px">
+        <span style="font-size:12px;font-weight:700">📷 Câmera:</span>
+        <button class="ctrl ctrl-sec" style="border-color:var(--yt-red)" onclick="startCameraOnly()">📷 Usar Câmera</button>
+        <button class="ctrl ctrl-sec" style="border-color:var(--yt-blue)" onclick="startScreenShare()">🖥️ Compartilhar Tela</button>
+        <button class="ctrl ctrl-sec" onclick="stopCamera()">⏹️ Desligar</button>
+        <span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px">🔊 Volume Master <input type="range" id="master-vol" min="0" max="100" value="80" style="width:80px;accent-color:var(--yt-blue)" oninput="setMasterVolume(this.value)"> <span id="master-vol-val">80%</span></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;background:linear-gradient(90deg, rgba(255,0,0,0.08), rgba(0,0,0,0.2));border:1px solid rgba(255,0,0,0.2);border-radius:var(--radius-md);padding:10px">
+        <span style="font-size:12px;font-weight:700">🎬 Estúdio OBS:</span>
+        <span style="font-size:11px;color:var(--text-secondary)">Preview (você vê) → Programa (pessoal vê)</span>
+        <button class="ctrl ctrl-sec" id="btn-studio-mode" onclick="toggleStudioMode()">🎬 Modo Estúdio: OFF</button>
+        <button class="ctrl ctrl-boost" id="btn-transition" onclick="transitionToProgram()" style="display:none">🔄 Transição → Atualizar Tela deles</button>
+        <span style="font-size:11px;color:var(--text-tertiary)">Edite na preview e clique Transição para atualizar quem assiste</span>
+      </div>
       <button class="ctrl ctrl-start" id="btn-start" onclick="startLive()">Iniciar Live</button>
       <button class="ctrl ctrl-stop" id="btn-stop" onclick="stopLive()" disabled>Encerrar Live</button>
       <button class="ctrl ctrl-pix" onclick="openPixModal()">⚡ Doar no LIVE PIX</button>
@@ -1786,13 +1806,86 @@ function playLikeRainSound(){ if(!soundEnabled||!audioCtx)return; for(let i=0;i<
 function toggleSound(){ soundEnabled=!soundEnabled; document.getElementById('sound-toggle').classList.toggle('muted',!soundEnabled); const vi=document.getElementById('vol-icon'); if(vi) vi.textContent=soundEnabled?'🔊':'🔇'; if(soundEnabled)initAudio(); }
 function setVolume(v){
   const vol=v/100;
-  if(audioCtx){
-    // Master gain would be needed for real volume, but we simulate via toast and store
-    try{ localStorage.setItem('volume', v); }catch(e){}
-    const vi=document.getElementById('vol-icon');
-    if(vi) vi.textContent = v==0?'🔇' : v<30?'🔈' : v<70?'🔉':'🔊';
-    toast('🔊 Volume '+v+'%','#3ea6ff');
+  try{ localStorage.setItem('volume', v); }catch(e){}
+  const vi=document.getElementById('vol-icon');
+  if(vi) vi.textContent = v==0?'🔇' : v<30?'🔈' : v<70?'🔉':'🔊';
+  toast('🔊 Volume '+v+'%','#3ea6ff');
+}
+function setMasterVolume(v){
+  setVolume(v);
+  const mv=document.getElementById('master-vol-val');
+  if(mv) mv.textContent=v+'%';
+  // Aplica em todos audios/vídeos
+  document.querySelectorAll('video, audio').forEach(el=>{ try{ el.volume=v/100; }catch(e){} });
+}
+/* STUDIO MODE OBS — preview vs program */
+let studioMode=false;
+let previewScene='gaming';
+function toggleStudioMode(){
+  studioMode=!studioMode;
+  const btn=document.getElementById('btn-studio-mode');
+  const preview=document.getElementById('studio-preview');
+  const trans=document.getElementById('btn-transition');
+  if(studioMode){
+    preview.style.display='block';
+    if(trans) trans.style.display='inline-flex';
+    if(btn){ btn.textContent='🎬 Modo Estúdio: ON'; btn.classList.add('active'); }
+    toast('🎬 Modo Estúdio ON — edite na Preview e clique Transição','#ff0000');
+    initPreviewCanvas();
+  } else {
+    preview.style.display='none';
+    if(trans) trans.style.display='none';
+    if(btn){ btn.textContent='🎬 Modo Estúdio: OFF'; btn.classList.remove('active'); }
+    toast('Modo Estúdio OFF','#aaa');
   }
+}
+function setPreviewScene(scene){
+  previewScene=scene;
+  toast('Preview: '+scene,'#3ea6ff');
+  drawPreviewScene();
+}
+function initPreviewCanvas(){
+  const cvs=document.getElementById('preview-canvas');
+  if(!cvs) return;
+  const dpr=window.devicePixelRatio||1;
+  const wrap=document.getElementById('preview-player');
+  cvs.width=wrap.clientWidth*dpr; cvs.height=wrap.clientHeight*dpr;
+  cvs.style.width=wrap.clientWidth+'px'; cvs.style.height=wrap.clientHeight+'px';
+  drawPreviewScene();
+}
+function drawPreviewScene(){
+  const cvs=document.getElementById('preview-canvas');
+  if(!cvs) return;
+  const ctx=cvs.getContext('2d');
+  const w=cvs.width, h=cvs.height;
+  ctx.clearRect(0,0,w,h);
+  // Desenha cena preview simplificada
+  const grd=ctx.createLinearGradient(0,0,w,h);
+  if(previewScene==='gaming'){ grd.addColorStop(0,'#050b14'); grd.addColorStop(1,'#112240'); }
+  else if(previewScene==='chatting'){ grd.addColorStop(0,'#1a0b2e'); grd.addColorStop(1,'#11052c'); }
+  else { grd.addColorStop(0,'#05050f'); grd.addColorStop(1,'#0f1f0f'); }
+  ctx.fillStyle=grd; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.font='bold 16px Roboto'; ctx.fillText('PREVIEW: '+previewScene.toUpperCase(), 20, 40);
+  ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.font='12px Roboto'; ctx.fillText('Clique Transição para atualizar Programa', 20, 60);
+}
+function transitionToProgram(){
+  if(!studioMode){ toast('Ative Modo Estúdio primeiro',' #ff6b6b'); return; }
+  // Copia preview para program (player principal)
+  setStreamScene(previewScene);
+  // Copia webcam preview se houver
+  const pv=document.getElementById('preview-video');
+  const mainVid=document.getElementById('camera-video');
+  if(pv && pv.srcObject && mainVid){
+    mainVid.srcObject=pv.srcObject;
+    mainVid.style.display='block';
+    document.getElementById('cam-placeholder').style.display='none';
+    document.getElementById('live-canvas').style.display='none';
+  }
+  toast('🔄 Transição feita! Programa atualizado','#2ba640');
+  // Feedback visual
+  const prog=document.getElementById('player');
+  prog.style.outline='3px solid #2ba640';
+  setTimeout(()=>prog.style.outline='',800);
 }
 
 let isLive=false, elapsedSeconds=0, liveStartTime=null;
@@ -1978,13 +2071,16 @@ async function startCameraOnly(){
     if(useFront) video.classList.add('mirror');
     document.getElementById('cam-placeholder').style.display='none';
     document.getElementById('live-canvas').style.display='none';
-    document.getElementById('cam-btn-wrap').style.display='none';
+    const cbw=document.getElementById('cam-btn-wrap'); if(cbw) cbw.style.display='none';
     cameraActive=true;
 
     document.getElementById('webcam-video').srcObject=stream;
     document.getElementById('webcam-frame').style.display='block';
     if(useFront) document.getElementById('webcam-frame').classList.add('mirror');
     document.getElementById('audio-eq').style.display='flex';
+    // Se modo estúdio, também alimenta preview
+    const pv=document.getElementById('preview-video');
+    if(studioMode && pv){ pv.srcObject=stream; pv.style.display='block'; }
     toast('Câmera ativada!','#4ecdc4');
   }catch(e){toast('Erro na câmera: '+e.message,'#ff6b6b');}
 }
@@ -2000,8 +2096,10 @@ async function startScreenShare(){
     video.srcObject=stream;video.style.display='block';video.classList.remove('mirror');
     document.getElementById('cam-placeholder').style.display='none';
     document.getElementById('live-canvas').style.display='none';
-    document.getElementById('cam-btn-wrap').style.display='none';
+    const cbw2=document.getElementById('cam-btn-wrap'); if(cbw2) cbw2.style.display='none';
     cameraActive=true;
+    const pv2=document.getElementById('preview-video');
+    if(studioMode && pv2){ pv2.srcObject=stream; pv2.style.display='block'; }
     toast('Tela compartilhada!','#3ea6ff');
   }catch(e){toast('Erro ao compartilhar tela','#ff6b6b');}
 }
@@ -2012,8 +2110,9 @@ function stopCamera(){
   document.getElementById('webcam-frame').style.display='none';
   document.getElementById('live-canvas').style.display='block';
   document.getElementById('cam-placeholder').style.display='flex';
-  document.getElementById('cam-btn-wrap').style.display='flex';
+  const cbw3=document.getElementById('cam-btn-wrap'); if(cbw3) cbw3.style.display='flex';
   document.getElementById('audio-eq').style.display='none';
+  const pv3=document.getElementById('preview-video'); if(pv3){ pv3.srcObject=null; pv3.style.display='none'; }
   cameraActive=false;
 }
 
