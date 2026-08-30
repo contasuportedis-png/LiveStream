@@ -804,11 +804,14 @@ body.chat-hidden .chat-panel{ display:none !important; }
       </div>
 
       <div class="player-controls" id="pctrl" style="display:none">
+        <button class="pctrl-btn" onclick="event.stopPropagation(); toggleSound()"><span id="vol-icon">🔊</span></button>
+        <input type="range" id="vol-slider" min="0" max="100" value="80" style="width:70px;accent-color:white" oninput="setVolume(this.value)" onclick="event.stopPropagation()">
         <button class="pctrl-btn"><svg class="icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
         <div class="progress-area">
           <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
           <span class="time-display">00:00 / 00:00</span>
         </div>
+        <button class="pctrl-btn tooltip" data-tip="Configurações" onclick="event.stopPropagation(); toast('⚙️ Qualidade: Auto 1080p • Velocidade: Normal',' #aaa')"><svg class="icon" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.5.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg></button>
         <button class="pctrl-btn tooltip" data-tip="Modo Teatro" onclick="event.stopPropagation(); toggleTheaterMode()"><svg class="icon" viewBox="0 0 24 24"><path d="M19 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 14H5V8h14v12z"/></svg></button>
         <button class="pctrl-btn tooltip" data-tip="Tela Cheia" onclick="event.stopPropagation(); toggleFullscreen()"><svg class="icon" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
       </div>
@@ -913,6 +916,37 @@ body.chat-hidden .chat-panel{ display:none !important; }
         <span id="viewer-graph-current" style="color:var(--yt-blue);font-weight:700">0 assistindo</span>
       </div>
       <canvas id="viewer-graph-canvas" height="80"></canvas>
+    </div>
+
+    <!-- YOUTUBE STUDIO DASHBOARD PRO -->
+    <div class="viewer-graph-box" style="margin-top:18px">
+      <div class="viewer-graph-title">
+        <span>📈 YouTube Studio — Analytics em Tempo Real</span>
+        <div style="display:flex;gap:6px">
+          <button class="chat-speed-btn" onclick="switchStudioTab('overview',this)" style="background:var(--yt-blue);color:#000">Visão geral</button>
+          <button class="chat-speed-btn" onclick="switchStudioTab('reach',this)">Alcance</button>
+          <button class="chat-speed-btn" onclick="switchStudioTab('engagement',this)">Engajamento</button>
+        </div>
+      </div>
+      <div id="studio-overview" class="studio-tab active" style="display:block">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0">
+          <div style="background:var(--bg-hover);border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;color:var(--text-secondary)">RECEITA ESTIMADA</div><div style="font-size:20px;font-weight:800;color:#2ba640" id="studio-revenue">R$ 0,00</div><div style="font-size:11px;color:var(--text-tertiary)">PIX + Super Chat</div></div>
+          <div style="background:var(--bg-hover);border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;color:var(--text-secondary)">RETENÇÃO MÉDIA</div><div style="font-size:20px;font-weight:800;color:var(--yt-blue)" id="studio-retention">42%</div><div style="font-size:11px;color:var(--text-tertiary)">+5% vs última live</div></div>
+          <div style="background:var(--bg-hover);border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;color:var(--text-secondary)">CTR THUMBNAIL</div><div style="font-size:20px;font-weight:800;color:#ffd700" id="studio-ctr">8.4%</div><div style="font-size:11px;color:var(--text-tertiary)">Cliques / impressões</div></div>
+        </div>
+        <canvas id="retention-canvas" height="80" style="width:100%;height:80px"></canvas>
+        <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;display:flex;justify-content:space-between"><span>0:00</span><span>Retenção de público ao longo da live • Atualiza a cada 2s</span><span id="studio-duration">00:00</span></div>
+      </div>
+      <div id="studio-reach" class="studio-tab" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">
+          <div style="background:var(--bg-hover);border-radius:8px;padding:12px"><div style="font-size:11px;color:var(--text-secondary)">IMPRESSÕES</div><div style="font-size:18px;font-weight:700" id="studio-impressions">0</div></div>
+          <div style="background:var(--bg-hover);border-radius:8px;padding:12px"><div style="font-size:11px;color:var(--text-secondary)">ORIGEM PRINCIPAL</div><div style="font-size:14px;font-weight:600">🔍 Recomendados 62%</div></div>
+        </div>
+      </div>
+      <div id="studio-engagement" class="studio-tab" style="display:none">
+        <div style="background:var(--bg-hover);border-radius:8px;padding:12px;margin:12px 0"><div style="font-size:11px;color:var(--text-secondary)">TAXA DE ENGAJAMENTO</div><div style="font-size:18px;font-weight:700" id="studio-engagement-val">12.4%</div><div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:6px"><div id="studio-engagement-bar" style="height:100%;width:12%;background:var(--yt-blue);border-radius:3px"></div></div></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px">💡 Atalhos YouTube: <b>k</b> play/pause • <b>m</b> mutar • <b>f</b> tela cheia • <b>i</b> teatro • <b>c</b> chat • <b>?</b> ajuda</div>
     </div>
 
     <div class="events-box">
@@ -1703,10 +1737,20 @@ function playStartSound(){ if(!soundEnabled||!audioCtx)return; playTone(523,0.2,
 function playStopSound(){ if(!soundEnabled||!audioCtx)return; playTone(784,0.2,'sine',0.1); setTimeout(()=>playTone(523,0.3,'sine',0.1),200); }
 function playRaidSound(){ if(!soundEnabled||!audioCtx)return; for(let i=0;i<3;i++) setTimeout(()=>playTone(200,0.3,'sawtooth',0.08),i*400); }
 function playLikeRainSound(){ if(!soundEnabled||!audioCtx)return; for(let i=0;i<10;i++) setTimeout(()=>playTone(800+Math.random()*400,0.08,'sine',0.04),i*80); }
-function toggleSound(){ soundEnabled=!soundEnabled; document.getElementById('sound-toggle').classList.toggle('muted',!soundEnabled); if(soundEnabled)initAudio(); }
+function toggleSound(){ soundEnabled=!soundEnabled; document.getElementById('sound-toggle').classList.toggle('muted',!soundEnabled); const vi=document.getElementById('vol-icon'); if(vi) vi.textContent=soundEnabled?'🔊':'🔇'; if(soundEnabled)initAudio(); }
+function setVolume(v){
+  const vol=v/100;
+  if(audioCtx){
+    // Master gain would be needed for real volume, but we simulate via toast and store
+    try{ localStorage.setItem('volume', v); }catch(e){}
+    const vi=document.getElementById('vol-icon');
+    if(vi) vi.textContent = v==0?'🔇' : v<30?'🔈' : v<70?'🔉':'🔊';
+    toast('🔊 Volume '+v+'%','#3ea6ff');
+  }
+}
 
 let isLive=false, elapsedSeconds=0, liveStartTime=null;
-let timerI, viewersI, chatI, statsI, notifI, sci, pixI, joinI, viralI;
+let timerI, viewersI, chatI, statsI, notifI, sci, pixI, joinI, viralI, studioI;
 let viewers=0, peakViewers=0, totalViews=0, likes=0, newSubs=0, totalDonationAmount=0, isSubbed=false;
 let currentStream=null, useFront=true, cameraActive=false;
 let videoFilterIndex=0;
@@ -2487,6 +2531,68 @@ function handleChatCommands(text){
   return false;
 }
 
+/* ===== YOUTUBE STUDIO DASHBOARD PRO ===== */
+let retentionHistory=[];
+function switchStudioTab(tab, btn){
+  document.querySelectorAll('.studio-tab').forEach(el=>el.style.display='none');
+  document.getElementById('studio-'+tab).style.display='block';
+  document.querySelectorAll('.viewer-graph-box .chat-speed-btn').forEach(b=>b.style.background='var(--bg-hover)');
+  if(btn) btn.style.background='var(--yt-blue)';
+}
+function updateStudioMetrics(){
+  // Receita = PIX + SuperChat
+  document.getElementById('studio-revenue').textContent='R$ '+totalDonationAmount.toFixed(2).replace('.',',');
+  document.getElementById('studio-impressions').textContent=fmt(Math.floor(totalViews*1.8));
+  const retention=42+Math.floor(Math.sin(Date.now()*0.0005)*8 + Math.random()*4);
+  document.getElementById('studio-retention').textContent=retention+'%';
+  const engagement=((likes/Math.max(1,totalViews))*100).toFixed(1);
+  document.getElementById('studio-engagement-val').textContent=engagement+'%';
+  document.getElementById('studio-engagement-bar').style.width=Math.min(100, engagement*3)+'%';
+  document.getElementById('studio-duration').textContent=fmtTime(elapsedSeconds);
+  // Retenção history
+  retentionHistory.push(retention);
+  if(retentionHistory.length>60) retentionHistory.shift();
+  drawRetentionChart();
+}
+function drawRetentionChart(){
+  const cvs=document.getElementById('retention-canvas');
+  if(!cvs) return;
+  const dpr=window.devicePixelRatio||1;
+  const w=cvs.clientWidth||300; const h=80;
+  if(cvs.width!==w*dpr || cvs.height!==h*dpr){ cvs.width=w*dpr; cvs.height=h*dpr; }
+  const ctx=cvs.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+  if(retentionHistory.length<2){
+    ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='12px Roboto'; ctx.fillText('Aguardando dados de retenção...',8,h/2); return;
+  }
+  const max=Math.max(...retentionHistory)*1.1, min=Math.min(...retentionHistory)*0.9, range=Math.max(1,max-min);
+  const step=w/(retentionHistory.length-1);
+  const grad=ctx.createLinearGradient(0,0,0,h); grad.addColorStop(0,'rgba(62,166,255,0.35)'); grad.addColorStop(1,'rgba(62,166,255,0)');
+  ctx.beginPath(); retentionHistory.forEach((v,i)=>{ const x=i*step; const y=h-((v-min)/range)*(h-10)-4; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+  ctx.lineTo((retentionHistory.length-1)*step,h); ctx.lineTo(0,h); ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+  ctx.beginPath(); retentionHistory.forEach((v,i)=>{ const x=i*step; const y=h-((v-min)/range)*(h-10)-4; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+  ctx.strokeStyle='#3ea6ff'; ctx.lineWidth=2; ctx.stroke();
+}
+
+/* ===== ATALHOS TECLADO YOUTUBE (k,m,f,i,c,?) ===== */
+document.addEventListener('keydown', (e)=>{
+  if(e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA' || e.target.isContentEditable) return;
+  if(e.key==='k' || e.key==='K'){
+    e.preventDefault();
+    if(isLive) stopLive(); else startLive();
+    toast('⌨️ k — '+(isLive?'Live iniciada':'Live pausada'),'#3ea6ff');
+  } else if(e.key==='m' || e.key==='M'){
+    e.preventDefault(); toggleSound(); toast('⌨️ m — '+(soundEnabled?'Som ON':'Som OFF'),'#3ea6ff');
+  } else if(e.key==='f' || e.key==='F'){
+    e.preventDefault(); toggleFullscreen();
+  } else if(e.key==='i' || e.key==='I'){
+    e.preventDefault(); toggleTheaterMode();
+  } else if(e.key==='c' || e.key==='C'){
+    e.preventDefault(); document.getElementById('chat-input')?.focus();
+  } else if(e.key==='?' || (e.shiftKey && e.key==='/')){
+    e.preventDefault(); toast('⌨️ Atalhos: k play/pause • m mutar • f tela cheia • i teatro • c chat • ? ajuda','#3ea6ff');
+  }
+});
+
 /* CANVAS HIGH DPI & DYNAMIC SCENES */
 let canvasCtx, confettiCtx, likeRainCtx, emojiCtx, canvasW, canvasH;
 let particles=[], confetti=[], likeRain=[], floatingEmojis=[];
@@ -2844,8 +2950,11 @@ function startLive(){
   pixI=setInterval(addRandomPix,25000);
   joinI=setInterval(addViewerJoin,4500);
   viralI=setInterval(maybeTriggerViralMoment,20000);
+  studioI=setInterval(updateStudioMetrics,2000);
+  retentionHistory=[];
 
   updateDisplay();
+  updateStudioMetrics();
   toast('Live iniciada!','#ff6b6b');
 }
 
@@ -2853,7 +2962,7 @@ function stopLive(){
   if(!isLive)return;
   playStopSound();isLive=false;
   clearInterval(timerI);clearInterval(viewersI);
-  clearInterval(statsI);clearInterval(notifI);clearInterval(sci);clearInterval(pixI);clearInterval(joinI);clearInterval(viralI);
+  clearInterval(statsI);clearInterval(notifI);clearInterval(sci);clearInterval(pixI);clearInterval(joinI);clearInterval(viralI);clearInterval(studioI);
   document.body.classList.remove('live-started');
   document.getElementById('waiting-screen').style.display='flex';
 
