@@ -8,16 +8,21 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server, path: '/ws' });
 
+// --- SALAS EM MEMÓRIA ---
+// room = { code, hostWs, mobileClients: Set<ws> }
+const rooms = new Map();
+
+// Health check para Render / monitoramento
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime(), rooms: rooms.size });
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Rota amigável /mobile -> mobile.html (sem precisar digitar a extensão no celular)
 app.get('/mobile', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'mobile.html'));
 });
-
-// --- SALAS EM MEMÓRIA ---
-// room = { code, hostWs, mobileClients: Set<ws> }
-const rooms = new Map();
 
 function generateRoomCode() {
   // Código curto e fácil de digitar no celular: LIVE-1234
@@ -39,9 +44,14 @@ function broadcastToMobiles(room, obj) {
   room.mobileClients.forEach(client => send(client, obj));
 }
 
+// Heartbeat para limpar conexões mortas (Render fecha conexões ociosas)
+function heartbeat() { this.isAlive = true; }
+
 wss.on('connection', (ws) => {
   ws.role = null;
   ws.roomCode = null;
+  ws.isAlive = true;
+  ws.on('pong', heartbeat);
 
   ws.on('message', (raw) => {
     let msg;
@@ -50,10 +60,17 @@ wss.on('connection', (ws) => {
     switch (msg.type) {
       // ===== HOST (PC) cria uma sala ao iniciar a live =====
       case 'host-create-room': {
+        // Se host já tinha sala, limpa a antiga para não vazar memória
+        if (ws.roomCode && rooms.has(ws.roomCode)) {
+          const oldRoom = rooms.get(ws.roomCode);
+          broadcastToMobiles(oldRoom, { type: 'host-disconnected' });
+          rooms.delete(ws.roomCode);
+        }
         const code = generateRoomCode();
         ws.role = 'host';
         ws.roomCode = code;
         rooms.set(code, { code, hostWs: ws, mobileClients: new Set() });
+        console.log(`[ROOM] Criada ${code} | total salas: ${rooms.size}`);
         send(ws, { type: 'room-created', code });
         break;
       }
@@ -77,7 +94,11 @@ wss.on('connection', (ws) => {
       case 'mobile-chat-message': {
         const room = rooms.get(ws.roomCode);
         if (!room || ws.role !== 'mobile') return;
-        send(room.hostWs, { type: 'chat-from-mobile', name: msg.name || 'Você (Cel)', text: msg.text });
+        // Validação + limite para evitar spam / XSS (frontend também sanitiza)
+        const safeName = String(msg.name || 'Você (Cel)').slice(0, 30).trim();
+        const safeText = String(msg.text || '').slice(0, 500).trim();
+        if (!safeText) return;
+        send(room.hostWs, { type: 'chat-from-mobile', name: safeName, text: safeText });
         break;
       }
 
@@ -140,14 +161,37 @@ wss.on('connection', (ws) => {
       // Host saiu: avisa celulares e destrói a sala
       broadcastToMobiles(room, { type: 'host-disconnected' });
       rooms.delete(ws.roomCode);
+      console.log(`[ROOM] Encerrada ${ws.roomCode} | restantes: ${rooms.size}`);
     } else if (ws.role === 'mobile') {
       room.mobileClients.delete(ws);
       send(room.hostWs, { type: 'mobile-disconnected', mobileCount: room.mobileClients.size });
     }
   });
+
+  ws.on('error', (err) => {
+    console.warn('[WS] erro:', err.message);
+  });
 });
 
+// Ping a cada 30s para manter alive no proxy do Render
+const interval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) return ws.terminate();
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
+
+wss.on('close', () => clearInterval(interval));
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor rodando na porta ${PORT} | health: /health`);
+});
+
+// Graceful shutdown (Render envia SIGTERM)
+process.on('SIGTERM', () => {
+  console.log('SIGTERM recebido, encerrando...');
+  clearInterval(interval);
+  server.close(() => process.exit(0));
 });

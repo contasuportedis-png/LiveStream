@@ -2,25 +2,42 @@
 
 Simulador de live com "segunda tela" no celular: chat em tempo real e uso da câmera do celular como webcam do PC.
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/contasuportedis-png/LiveStream)
+
+> Clique no botão acima para publicar o site com todas as funcionalidades (WebSocket + WebRTC) em 1 clique no Render (grátis).
+
 ## Estrutura
 
 - `server.js` — servidor Node (Express + WebSocket) que serve as páginas e faz a ponte entre PC e celular.
 - `public/index.html` — página principal, aberta no PC. É o "host" da live.
 - `public/mobile.html` — página da segunda tela, aberta no celular.
+- `render.yaml` — blueprint para deploy automático no Render (health check em `/health`).
+- `package.json` — deps `express` + `ws`, start `node server.js`.
 
-## Como publicar de graça no Render
+## Como publicar de graça no Render (100% funcional)
 
-1. Crie uma conta em **render.com** (pode entrar com GitHub).
-2. Suba esta pasta inteira para um repositório no GitHub (pode ser privado).
-   - Se preferir sem Git: no Render, ao criar o serviço, também dá para conectar direto a um repositório importado de um zip via GitHub (crie um repo vazio, arraste os arquivos pela interface do GitHub, sem precisar saber usar Git no terminal).
-3. No Render, clique em **New + → Web Service**.
-4. Conecte o repositório.
-5. Configurações do serviço:
+### Opção A — 1 clique (recomendado)
+
+1. Clique no botão **Deploy to Render** acima (ou acesse https://render.com/deploy?repo=https://github.com/contasuportedis-png/LiveStream).
+2. Faça login com GitHub (`contasuportedis-png`) e autorize o Render.
+3. O Render vai ler o `render.yaml` automaticamente:
+   - **Runtime**: Node 18
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Health Check**: `/health`
+   - **Instance Type**: Free
+4. Clique em **Apply**. Aguarde ~2 min. O Render vai te dar URL tipo `https://live-stream-companion-xxxx.onrender.com`.
+
+### Opção B — Manual
+
+1. Crie conta em **render.com** (pode entrar com GitHub).
+2. Clique em **New + → Web Service** → conecte o repositório `contasuportedis-png/LiveStream` (branch `main`).
+3. Configurações:
    - **Runtime**: Node
    - **Build Command**: `npm install`
    - **Start Command**: `npm start`
    - **Instance Type**: Free
-6. Clique em **Create Web Service**. O Render vai te dar uma URL tipo `https://seu-app.onrender.com`.
+4. **Create Web Service**. URL: `https://seu-app.onrender.com`.
 
 ## Como usar
 
@@ -31,11 +48,25 @@ Simulador de live com "segunda tela" no celular: chat em tempo real e uso da câ
 5. No celular você pode:
    - Ver o chat em tempo real (aba **Chat**), inclusive em tela cheia (botão ⛶).
    - Ativar a câmera do celular (aba **Webcam**) para enviá-la ao PC.
-6. No PC, quando a câmera do celular conectar, um botão **"📷 Mostrar Webcam do Celular"** aparece no card da segunda tela — use-o para alternar entre o quadradinho de webcam e tela cheia (trocando de lugar com o jogo/tela compartilhada).
+6. No PC, quando a câmera do celular conectar, um botão **"📷 Mostrar Webcam do Celular"** aparece no card da segunda tela — use-o para alternar entre o quadradinho de webcam e tela cheia.
+
+## Verificar se está online
+
+- Health check: `https://seu-app.onrender.com/health` → `{ "status": "ok" }`
+- Logs no Render: Dashboard → seu serviço → Logs (verá `[ROOM] Criada LIVE-XXXX`)
 
 ## Observações importantes
 
-- **Plano gratuito do Render "dorme"** depois de um tempo sem acesso e demora uns 30-60 segundos para acordar no primeiro acesso do dia. Depois de acordado, funciona normalmente.
-- Funciona melhor com **PC e celular na mesma rede Wi-Fi**, mas também funciona em redes diferentes (ex: celular no 4G) — pode ter um pouco mais de instabilidade dependendo da rede.
-- Ao atualizar (F5) a página do PC, um novo código é gerado e o celular precisa reconectar com o código novo.
-- Deixe a tela do celular ligada enquanto estiver usando como webcam (o navegador tenta evitar que ela apague sozinha, mas nem todo celular suporta isso).
+- **Plano gratuito do Render "dorme"** depois de ~15 min sem acesso e demora 30-60s para acordar no primeiro acesso. Depois funciona normal. Heartbeat a cada 30s mantém WS vivo (`server.js:176`).
+- Funciona melhor com **PC e celular na mesma rede Wi-Fi**, mas também funciona em redes diferentes (ex: 4G) via STUN `stun.l.google.com:19302`.
+- Ao atualizar (F5) a página do PC, novo código é gerado e celular reconecta.
+- Deixe a tela do celular ligada ao usar como webcam (Wake Lock quando suportado).
+
+## Desenvolvimento local
+
+```bash
+npm install
+npm start
+# http://localhost:3000  e  http://localhost:3000/mobile
+# health: http://localhost:3000/health
+```
