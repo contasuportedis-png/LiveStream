@@ -733,26 +733,23 @@ body.chat-bottom.chat-hidden .chat-panel{ display:none !important; }
         <div class="pix-speaking-indicator">🔊 Lendo mensagem ao vivo...</div>
       </div>
 
-      <!-- TELA INICIAL / WAITING SCREEN CUSTOMIZÁVEL PRO -->
+      <!-- TELA INICIAL / WAITING SCREEN CUSTOMIZÁVEL PRO — SEM BOTÕES -->
       <div class="waiting-screen" id="waiting-screen">
         <div class="waiting-bg" id="waiting-bg"></div>
         <video class="waiting-video" id="waiting-video" autoplay loop muted playsinline style="display:none"></video>
         <img class="waiting-image" id="waiting-image" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.4" alt="">
+        <div id="waiting-embed" style="display:none;position:absolute;inset:0;z-index:1"></div>
         <div class="waiting-content">
           <div class="waiting-badge">● EM BREVE • LIVE COMEÇA JÁ</div>
           <h2 class="waiting-title" id="waiting-title">LIVE COMEÇA EM BREVE</h2>
-          <p class="waiting-subtitle" id="waiting-subtitle">Ajuste sua câmera e microfone, prepare o chat e clique em Iniciar Live!</p>
+          <p class="waiting-subtitle" id="waiting-subtitle">Prepare o chat — a live já vai começar!</p>
           <div class="waiting-countdown" id="waiting-countdown" style="display:none">
             <span class="waiting-countdown-num" id="waiting-countdown-num">05:00</span>
             <span class="waiting-countdown-label">para começar</span>
           </div>
-          <div class="waiting-actions">
-            <button class="waiting-btn" onclick="event.stopPropagation(); startLive()">▶️ Iniciar Live Agora</button>
-            <button class="waiting-btn-secondary" onclick="event.stopPropagation(); document.getElementById('waiting-screen').style.display='none'">Esconder tela inicial</button>
-          </div>
         </div>
         <audio id="waiting-audio" loop preload="none" style="display:none"></audio>
-        <div class="waiting-music-note">🎵 Música de espera: <span id="waiting-music-status">OFF</span> • Ative em 🎧 Som de Fundo <button class="ctrl ctrl-sec" style="padding:2px 6px;font-size:10px;margin-left:6px" onclick="toggleWaitingMusic()">🎵 Teste</button></div>
+        <div class="waiting-music-note" id="waiting-music-note" style="display:none">🎵 Música de espera tocando</div>
       </div>
 
       <div class="camera-off" id="cam-placeholder">
@@ -1072,7 +1069,7 @@ body.chat-bottom.chat-hidden .chat-panel{ display:none !important; }
             </label>
             <button class="ctrl ctrl-sec" style="padding:8px;font-size:11px" onclick="clearWaitingMedia()">🗑️ Limpar mídia</button>
           </div>
-          <input type="text" id="custom-waiting-music" class="form-input" placeholder="URL música MP3 loop (ex: https://.../lofi.mp3)" oninput="updateWaitingMusic(this.value)" style="margin-bottom:6px">
+          <input type="text" id="custom-waiting-music" class="form-input" placeholder="MP3 direto ou Spotify/YouTube (ex: https://open.spotify.com/track/... ou https://youtu.be/...)" oninput="updateWaitingMusic(this.value)" style="margin-bottom:6px">
           <div class="wc-slider-row" style="flex-direction:column;align-items:stretch;gap:6px">
             <label style="font-size:11px;color:var(--text-secondary)">Agendar horário (countdown automático)</label>
             <input type="datetime-local" id="waiting-scheduled" class="form-input" onchange="setWaitingScheduled(this.value)">
@@ -2390,14 +2387,47 @@ function updateWaitingImage(url){
 }
 function updateWaitingMusic(url){
   const audio=document.getElementById('waiting-audio');
-  const status=document.getElementById('waiting-music-status');
-  if(url && url.trim().match(/^https?:\/\/.+\.(mp3|wav|ogg|m4a)(\?.*)?$/i)){
-    audio.src=url.trim(); audio.volume=0.35; audio.play().catch(()=>{});
-    if(status) status.textContent='ON';
-  } else if(!url){
-    audio.pause(); audio.removeAttribute('src');
-    if(status) status.textContent='OFF';
+  const embed=document.getElementById('waiting-embed');
+  const note=document.getElementById('waiting-music-note');
+  // Limpa anteriores
+  audio.pause(); audio.removeAttribute('src'); embed.innerHTML=''; embed.style.display='none';
+  if(!url || !url.trim()){
+    if(note) note.style.display='none';
+    try{localStorage.setItem('waiting-music',url)}catch(e){}
+    return;
   }
+  url=url.trim();
+  // Spotify: https://open.spotify.com/track/xxx ou playlist/album
+  const spotifyMatch=url.match(/open\.spotify\.com\/(track|playlist|album)\/([a-zA-Z0-9]+)/);
+  if(spotifyMatch){
+    const type=spotifyMatch[1], id=spotifyMatch[2];
+    embed.innerHTML='<iframe src="https://open.spotify.com/embed/'+type+'/'+id+'?utm_source=generator&autoplay=1&loop=1" width="100%" height="100%" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;opacity:0.6"></iframe>';
+    embed.style.display='block'; if(note){ note.style.display='block'; note.innerHTML='🎵 Spotify tocando'; }
+    toast('🎵 Spotify embed carregado!',' #1DB954');
+    try{localStorage.setItem('waiting-music',url)}catch(e){}
+    return;
+  }
+  // YouTube: youtube.com/watch?v=xxx , youtu.be/xxx , youtube.com/embed/xxx
+  const ytMatch=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+  if(ytMatch){
+    const id=ytMatch[1];
+    embed.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1&loop=1&playlist='+id+'&controls=0&mute=0&rel=0" width="100%" height="100%" frameborder="0" allow="autoplay; encrypted-media" style="position:absolute;inset:0;width:100%;height:100%;opacity:0.5"></iframe>';
+    embed.style.display='block'; if(note){ note.style.display='block'; note.innerHTML='🎵 YouTube tocando'; }
+    toast('🎵 YouTube embed carregado!',' #ff0000');
+    try{localStorage.setItem('waiting-music',url)}catch(e){}
+    return;
+  }
+  // MP3 direto
+  if(url.match(/^https?:\/\/.+\.(mp3|wav|ogg|m4a)(\?.*)?$/i)){
+    audio.src=url; audio.volume=0.35; audio.play().catch(()=>{});
+    if(note){ note.style.display='block'; note.innerHTML='🎵 Música MP3 tocando'; }
+    toast('🎵 Música MP3 carregada!',' #2ba640');
+    try{localStorage.setItem('waiting-music',url)}catch(e){}
+    return;
+  }
+  // Se não reconhecido, tenta como MP3 mesmo
+  audio.src=url; audio.volume=0.35; audio.play().catch(()=> toast('Link não reconhecido. Tente MP3 direto, Spotify ou YouTube.',' #ff6b6b'));
+  if(note) note.style.display='block';
   try{localStorage.setItem('waiting-music',url)}catch(e){}
 }
 function toggleWaitingMusic(){
@@ -2429,10 +2459,13 @@ function clearWaitingMedia(){
   document.getElementById('waiting-image').style.display='none';
   document.getElementById('waiting-video').style.display='none';
   document.getElementById('waiting-video').pause();
+  document.getElementById('waiting-embed').innerHTML=''; document.getElementById('waiting-embed').style.display='none';
+  const aud=document.getElementById('waiting-audio'); aud.pause(); aud.removeAttribute('src');
   document.getElementById('waiting-bg').style.display='block';
   document.getElementById('custom-waiting-image').value='';
   document.getElementById('custom-waiting-video').value='';
-  try{localStorage.removeItem('waiting-image'); localStorage.removeItem('waiting-video');}catch(e){}
+  const musicInput=document.getElementById('custom-waiting-music'); if(musicInput) musicInput.value='';
+  try{localStorage.removeItem('waiting-image'); localStorage.removeItem('waiting-video'); localStorage.removeItem('waiting-music');}catch(e){}
   toast('Mídia limpa',' #aaa');
 }
 function setWaitingScheduled(val){
