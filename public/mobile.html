@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Segunda Tela - Live Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-primary:#0f0f0f;--bg-secondary:#121212;--bg-elevated:#1f1f1f;--bg-hover:#272727;
+  --border:rgba(255,255,255,0.1);--border-strong:rgba(255,255,255,0.2);
+  --text-primary:#f1f1f1;--text-secondary:#aaaaaa;--text-tertiary:#717171;
+  --yt-red:#ff0000;--yt-blue:#3ea6ff;--yt-green:#2ba640;--pix-green:#32bcad;
+  --radius-sm:8px;--radius-md:12px;--radius-lg:18px;--radius-full:9999px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Roboto',sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;min-height:100dvh;overflow:hidden}
+
+/* ===== TELA DE CONEXÃO ===== */
+.connect-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:24px;text-align:center}
+.connect-logo{font-size:22px;font-weight:900;margin-bottom:6px}
+.connect-sub{font-size:13px;color:var(--text-secondary);margin-bottom:32px}
+.code-input{
+  width:100%;max-width:280px;background:var(--bg-elevated);border:2px solid var(--border-strong);
+  border-radius:var(--radius-md);padding:16px;font-size:22px;text-align:center;letter-spacing:2px;
+  color:white;font-family:'Roboto Mono',monospace;text-transform:uppercase;outline:none;margin-bottom:16px
+}
+.code-input:focus{border-color:var(--yt-blue)}
+.connect-btn{
+  width:100%;max-width:280px;background:var(--yt-blue);color:#000;border:none;padding:14px;
+  border-radius:var(--radius-full);font-size:15px;font-weight:700;cursor:pointer
+}
+.connect-btn:disabled{opacity:0.5}
+.connect-error{color:#ff6b6b;font-size:13px;margin-top:14px;min-height:18px}
+.connect-hint{font-size:12px;color:var(--text-tertiary);margin-top:24px;max-width:280px;line-height:1.5}
+
+/* ===== APP CONECTADO ===== */
+.app{display:none;flex-direction:column;height:100vh;height:100dvh}
+.app.active{display:flex}
+
+.app-header{
+  display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+  border-bottom:1px solid var(--border);flex-shrink:0
+}
+.app-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.live-pulse{width:8px;height:8px;border-radius:50%;background:var(--yt-red);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.app-stats{font-size:11px;color:var(--text-secondary);display:flex;gap:10px}
+
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:12px 0;text-align:center;font-size:13px;font-weight:600;color:var(--text-secondary);border-bottom:2px solid transparent}
+.tab.active{color:var(--yt-blue);border-bottom-color:var(--yt-blue)}
+
+.panel{flex:1;overflow:hidden;display:none;flex-direction:column;min-height:0}
+.panel.active{display:flex}
+
+/* CHAT PANEL */
+.chat-body{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px}
+.cmsg{display:flex;gap:8px;align-items:flex-start;padding:4px 6px;font-size:13px;line-height:1.4}
+.cmsg-av{min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0}
+.cmsg-name{font-weight:600;margin-right:5px}
+.cmsg-text{word-break:break-word}
+.sysmsg{text-align:center;color:var(--text-secondary);font-size:11px;padding:6px 0}
+
+.chat-input-wrap{padding:10px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+.chat-input-wrap input{
+  flex:1;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-full);
+  padding:10px 16px;color:white;font-size:14px;outline:none
+}
+.send-btn{width:42px;height:42px;border-radius:50%;background:var(--yt-blue);color:#000;border:none;font-size:16px;flex-shrink:0}
+
+.chat-fullscreen-btn{
+  position:fixed;bottom:80px;right:16px;width:48px;height:48px;border-radius:50%;
+  background:var(--bg-elevated);border:1px solid var(--border-strong);color:white;font-size:18px;
+  display:flex;align-items:center;justify-content:center;z-index:50
+}
+
+/* CAMERA PANEL */
+.cam-panel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
+.cam-preview-wrap{width:100%;max-width:340px;aspect-ratio:9/16;background:#000;border-radius:var(--radius-lg);overflow:hidden;position:relative;border:1px solid var(--border)}
+.cam-preview-wrap video{width:100%;height:100%;object-fit:cover}
+.cam-off-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-secondary);font-size:13px;padding:20px;text-align:center}
+.cam-status-badge{position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.7);padding:5px 12px;border-radius:var(--radius-full);font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px}
+.cam-status-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--text-tertiary)}
+.cam-status-badge.live .dot{background:var(--yt-green);box-shadow:0 0 6px var(--yt-green)}
+
+.cam-controls{display:flex;gap:10px;width:100%;max-width:340px}
+.cam-btn{flex:1;padding:14px;border-radius:var(--radius-full);border:none;font-size:14px;font-weight:700;cursor:pointer}
+.cam-btn-start{background:var(--pix-green);color:#000}
+.cam-btn-stop{background:var(--bg-hover);color:white;border:1px solid var(--border)}
+.cam-btn-flip{background:var(--bg-hover);color:white;border:1px solid var(--border);flex:0 0 52px}
+
+.cam-hint{font-size:12px;color:var(--text-tertiary);text-align:center;max-width:300px}
+
+/* STATS PANEL (mini) */
+.mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px}
+.mini-stat-card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;text-align:center}
+.mini-stat-val{font-size:22px;font-weight:800;color:var(--yt-blue)}
+.mini-stat-lbl{font-size:10px;color:var(--text-secondary);text-transform:uppercase;margin-top:4px}
+
+/* FULLSCREEN CHAT OVERLAY */
+.fullscreen-chat{position:fixed;inset:0;background:var(--bg-primary);z-index:100;display:none;flex-direction:column}
+.fullscreen-chat.active{display:flex}
+.fs-chat-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.fs-chat-close{background:var(--bg-hover);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:18px}
+</style>
+</head>
+<body>
+
+<!-- TELA DE CONEXÃO -->
+<div class="connect-screen" id="connect-screen">
+  <div class="connect-logo">📱 Live Companion</div>
+  <div class="connect-sub">Digite o código exibido no seu PC para conectar</div>
+  <input type="text" class="code-input" id="code-input" placeholder="LIVE-0000" maxlength="9" autocomplete="off" autocapitalize="characters">
+  <button class="connect-btn" id="connect-btn" onclick="connectToRoom()">Conectar</button>
+  <div class="connect-error" id="connect-error"></div>
+  <div class="connect-hint">O código aparece no PC, na seção "Segunda Tela (Celular)", assim que você inicia a live.</div>
+</div>
+
+<!-- APP CONECTADO -->
+<div class="app" id="app">
+  <div class="app-header">
+    <div class="app-title"><span class="live-pulse"></span> Conectado à Live</div>
+    <div class="app-stats"><span id="mini-viewers">0 assistindo</span></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-panel="chat-panel" onclick="switchTab('chat-panel', this)">💬 Chat</div>
+    <div class="tab" data-panel="cam-panel" onclick="switchTab('cam-panel', this)">📷 Webcam</div>
+    <div class="tab" data-panel="stats-panel" onclick="switchTab('stats-panel', this)">📊 Stats</div>
+  </div>
+
+  <div class="panel active" id="chat-panel">
+    <div class="chat-body" id="chat-body"></div>
+    <div class="chat-input-wrap">
+      <input type="text" id="chat-input" placeholder="Enviar mensagem..." onkeypress="if(event.key==='Enter')sendMobileChat()">
+      <button class="send-btn" onclick="sendMobileChat()">➤</button>
+    </div>
+  </div>
+
+  <div class="panel" id="cam-panel">
+    <div class="cam-panel">
+      <div class="cam-preview-wrap">
+        <video id="mobile-cam-video" autoplay playsinline muted></video>
+        <div class="cam-off-msg" id="cam-off-msg">
+          <span style="font-size:32px">📷</span>
+          <span>Sua câmera aparecerá aqui.<br>Toque em "Ativar Câmera" para usá-la como webcam do PC.</span>
+        </div>
+        <div class="cam-status-badge" id="cam-status-badge"><span class="dot"></span><span id="cam-status-text">Desligada</span></div>
+      </div>
+      <div class="cam-controls">
+        <button class="cam-btn cam-btn-flip" id="cam-flip-btn" onclick="flipMobileCamera()" style="display:none">🔄</button>
+        <button class="cam-btn cam-btn-start" id="cam-start-btn" onclick="startMobileCamera()">Ativar Câmera</button>
+      </div>
+      <div class="cam-hint">Mantenha esta aba aberta e a tela do celular ligada enquanto usar como webcam. Funciona melhor na mesma rede Wi-Fi do PC.</div>
+    </div>
+  </div>
+
+  <div class="panel" id="stats-panel">
+    <div class="mini-stats">
+      <div class="mini-stat-card"><div class="mini-stat-val" id="stat-viewers">0</div><div class="mini-stat-lbl">Assistindo</div></div>
+      <div class="mini-stat-card"><div class="mini-stat-val" id="stat-likes">0</div><div class="mini-stat-lbl">Likes</div></div>
+      <div class="mini-stat-card"><div class="mini-stat-val" id="stat-views">0</div><div class="mini-stat-lbl">Views Totais</div></div>
+      <div class="mini-stat-card"><div class="mini-stat-val" id="stat-subs">0</div><div class="mini-stat-lbl">Novos Inscritos</div></div>
+    </div>
+  </div>
+
+  <button class="chat-fullscreen-btn" onclick="openFullscreenChat()" title="Chat em tela cheia">⛶</button>
+</div>
+
+<!-- CHAT EM TELA CHEIA -->
+<div class="fullscreen-chat" id="fullscreen-chat">
+  <div class="fs-chat-header">
+    <strong>💬 Chat ao Vivo</strong>
+    <button class="fs-chat-close" onclick="closeFullscreenChat()">✕</button>
+  </div>
+  <div class="chat-body" id="fs-chat-body"></div>
+  <div class="chat-input-wrap">
+    <input type="text" id="fs-chat-input" placeholder="Enviar mensagem..." onkeypress="if(event.key==='Enter')sendMobileChatFullscreen()">
+    <button class="send-btn" onclick="sendMobileChatFullscreen()">➤</button>
+  </div>
+</div>
+
+<script>
+let ws = null;
+let roomCode = null;
+let peerConnection = null;
+let localStream = null;
+let usingFrontCamera = true;
+
+function getWsUrl(){
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return proto + '//' + location.host + '/ws';
+}
+
+document.getElementById('code-input').addEventListener('input', (e) => {
+  e.target.value = e.target.value.toUpperCase();
+});
+
+function connectToRoom(){
+  const raw = document.getElementById('code-input').value.trim().toUpperCase();
+  if(!raw){ showConnectError('Digite o código exibido no PC.'); return; }
+  const code = raw.startsWith('LIVE-') ? raw : 'LIVE-' + raw.replace(/\D/g,'');
+
+  document.getElementById('connect-btn').disabled = true;
+  document.getElementById('connect-btn').textContent = 'Conectando...';
+
+  ws = new WebSocket(getWsUrl());
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'mobile-join-room', code }));
+  };
+
+  ws.onerror = () => {
+    showConnectError('Erro de conexão com o servidor.');
+    resetConnectBtn();
+  };
+
+  ws.onclose = () => {
+    if(document.getElementById('app').classList.contains('active')){
+      showConnectError('Conexão perdida. A live pode ter sido encerrada.');
+      document.getElementById('app').classList.remove('active');
+      document.getElementById('connect-screen').style.display = 'flex';
+    }
+  };
+
+  ws.onmessage = (event) => {
+    let msg;
+    try{ msg = JSON.parse(event.data); }catch(e){ return; }
+    handleServerMessage(msg);
+  };
+}
+
+function showConnectError(text){
+  document.getElementById('connect-error').textContent = text;
+}
+function resetConnectBtn(){
+  document.getElementById('connect-btn').disabled = false;
+  document.getElementById('connect-btn').textContent = 'Conectar';
+}
+
+function handleServerMessage(msg){
+  switch(msg.type){
+    case 'join-success':
+      roomCode = msg.code;
+      document.getElementById('connect-screen').style.display = 'none';
+      document.getElementById('app').classList.add('active');
+      addSystemMsg('Conectado! Você está vendo o chat da live em tempo real.');
+      break;
+
+    case 'join-error':
+      showConnectError(msg.message);
+      resetConnectBtn();
+      break;
+
+    case 'host-disconnected':
+      addSystemMsg('A live foi encerrada no PC.');
+      stopMobileCamera();
+      break;
+
+    case 'chat-event':
+      renderChatMessage(msg.payload);
+      break;
+
+    case 'stats-update':
+      updateMiniStats(msg.payload);
+      break;
+
+    case 'webrtc-answer':
+      if(peerConnection){
+        peerConnection.setRemoteDescription(new RTCSessionDescription(msg.answer)).catch(()=>{});
+      }
+      break;
+
+    case 'webrtc-ice-candidate':
+      if(peerConnection && msg.candidate){
+        peerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(()=>{});
+      }
+      break;
+  }
+}
+
+/* ===== CHAT ===== */
+function renderChatMessage(payload){
+  [document.getElementById('chat-body'), document.getElementById('fs-chat-body')].forEach(cb => {
+    if(!cb) return;
+    const div = document.createElement('div');
+    div.className = 'cmsg';
+    const color = payload.color || '#3ea6ff';
+    div.innerHTML = '<div class="cmsg-av" style="background:'+color+'">'+(payload.name?payload.name[0]:'?')+'</div>'+
+                     '<div><span class="cmsg-name" style="color:'+color+'">'+payload.name+'</span>'+
+                     '<span class="cmsg-text">'+payload.text+'</span></div>';
+    cb.appendChild(div);
+    cb.scrollTop = cb.scrollHeight;
+    while(cb.children.length > 150) cb.removeChild(cb.firstChild);
+  });
+}
+
+function addSystemMsg(text){
+  [document.getElementById('chat-body'), document.getElementById('fs-chat-body')].forEach(cb => {
+    if(!cb) return;
+    const div = document.createElement('div');
+    div.className = 'sysmsg';
+    div.textContent = text;
+    cb.appendChild(div);
+    cb.scrollTop = cb.scrollHeight;
+  });
+}
+
+function sendMobileChat(){
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if(!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ type: 'mobile-chat-message', name: 'Você (Cel)', text }));
+  renderChatMessage({ name: 'Você (Cel)', text, color: '#65b8ff' });
+  inp.value = '';
+}
+
+function sendMobileChatFullscreen(){
+  const inp = document.getElementById('fs-chat-input');
+  const text = inp.value.trim();
+  if(!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ type: 'mobile-chat-message', name: 'Você (Cel)', text }));
+  renderChatMessage({ name: 'Você (Cel)', text, color: '#65b8ff' });
+  inp.value = '';
+}
+
+function openFullscreenChat(){
+  document.getElementById('fullscreen-chat').classList.add('active');
+  const fsBody = document.getElementById('fs-chat-body');
+  fsBody.scrollTop = fsBody.scrollHeight;
+}
+function closeFullscreenChat(){
+  document.getElementById('fullscreen-chat').classList.remove('active');
+}
+
+/* ===== STATS ===== */
+function updateMiniStats(payload){
+  document.getElementById('mini-viewers').textContent = fmt(payload.viewers||0) + ' assistindo';
+  document.getElementById('stat-viewers').textContent = fmt(payload.viewers||0);
+  document.getElementById('stat-likes').textContent = fmt(payload.likes||0);
+  document.getElementById('stat-views').textContent = fmt(payload.totalViews||0);
+  document.getElementById('stat-subs').textContent = fmt(payload.newSubs||0);
+}
+function fmt(n){ return n.toLocaleString('pt-BR'); }
+
+/* ===== TABS ===== */
+function switchTab(panelId, el){
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+/* ===== WEBCAM DO CELULAR -> PC (WebRTC) ===== */
+async function startMobileCamera(){
+  try{
+    const constraints = {
+      video: { facingMode: usingFrontCamera ? 'user' : 'environment' },
+      audio: false
+    };
+    localStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+    const video = document.getElementById('mobile-cam-video');
+    video.srcObject = localStream;
+    document.getElementById('cam-off-msg').style.display = 'none';
+    document.getElementById('cam-status-badge').classList.add('live');
+    document.getElementById('cam-status-text').textContent = 'Enviando ao vivo';
+    document.getElementById('cam-start-btn').textContent = 'Desligar Câmera';
+    document.getElementById('cam-start-btn').onclick = stopMobileCamera;
+    document.getElementById('cam-start-btn').className = 'cam-btn cam-btn-stop';
+    document.getElementById('cam-flip-btn').style.display = 'block';
+
+    await startWebRTCToHost();
+  }catch(e){
+    alert('Não foi possível acessar a câmera: ' + e.message);
+  }
+}
+
+function stopMobileCamera(){
+  if(localStream){
+    localStream.getTracks().forEach(t => t.stop());
+    localStream = null;
+  }
+  if(peerConnection){
+    peerConnection.close();
+    peerConnection = null;
+  }
+  document.getElementById('mobile-cam-video').srcObject = null;
+  document.getElementById('cam-off-msg').style.display = 'flex';
+  document.getElementById('cam-status-badge').classList.remove('live');
+  document.getElementById('cam-status-text').textContent = 'Desligada';
+  document.getElementById('cam-start-btn').textContent = 'Ativar Câmera';
+  document.getElementById('cam-start-btn').onclick = startMobileCamera;
+  document.getElementById('cam-start-btn').className = 'cam-btn cam-btn-start';
+  document.getElementById('cam-flip-btn').style.display = 'none';
+}
+
+async function flipMobileCamera(){
+  usingFrontCamera = !usingFrontCamera;
+  if(localStream){
+    stopMobileCamera();
+    await startMobileCamera();
+  }
+}
+
+async function startWebRTCToHost(){
+  peerConnection = new RTCPeerConnection({
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  });
+
+  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+  peerConnection.onicecandidate = (e) => {
+    if(e.candidate && ws){
+      ws.send(JSON.stringify({ type: 'webrtc-ice-candidate', candidate: e.candidate }));
+    }
+  };
+
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+
+  ws.send(JSON.stringify({ type: 'webrtc-offer', offer }));
+}
+
+// Evita a tela apagar enquanto a câmera estiver ativa, quando suportado
+let wakeLock = null;
+async function requestWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && localStream) requestWakeLock();
+});
+</script>
+</body>
+</html>
