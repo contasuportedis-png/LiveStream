@@ -529,6 +529,32 @@ body.theater-mode .chat-panel{width:100%;min-height:400px;border-left:none;borde
 .sound-toggle{position:fixed;bottom:24px;left:24px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-full);width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3000;color:var(--text-primary)}
 .sound-toggle.muted{opacity:0.5}
 
+/* ===== YOUTUBE POLISH — mais fiel ao youtube.com ===== */
+.header{ background:#0f0f0f; border-bottom:1px solid #303030; height:56px; padding:0 16px; }
+.search-box{ background:#121212; border:1px solid #303030; border-right:none; height:40px; }
+.search-box:focus-within{ border-color:#1c62b9; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3); }
+.search-box input{ font-size:16px; line-height:24px; }
+.search-btn{ background:#222222; border:1px solid #303030; height:40px; width:64px; }
+.search-btn:hover{ background:#272727; }
+.mic-btn{ background:#272727; }
+.mic-btn:hover{ background:#3f3f3f; }
+.yt-logo-text{ font-family:'Roboto', Arial, sans-serif; font-weight:700; letter-spacing:-0.5px; font-size:20px; }
+.video-title{ font-size:20px; font-weight:700; line-height:28px; letter-spacing:0; }
+.ch-name{ font-size:16px; font-weight:500; line-height:22px; }
+.ch-subs{ font-size:12px; color:#aaa; line-height:18px; }
+.sub-btn{ background:#fff; color:#0f0f0f; border-radius:18px; padding:0 16px; height:36px; font-weight:500; font-size:14px; }
+.sub-btn.subbed{ background:#272727; color:#f1f1f1; }
+.act-btn{ background:#272727; border-radius:18px; height:36px; padding:0 16px; font-weight:500; font-size:14px; }
+.act-btn:hover{ background:#3f3f3f; }
+.act-btn#like-btn{ background:#272727; border-radius:18px 0 0 18px; border-right:1px solid #3f3f3f; }
+.action-btns{ gap:8px; }
+.ch-avatar{ width:40px; height:40px; font-size:16px; }
+.chat-header{ background:#0f0f0f; border-bottom:1px solid #303030; padding:12px 16px; }
+.chat-body{ background:#0f0f0f; }
+.chat-input-box{ background:#212121; border:1px solid #303030; }
+.chat-input-box:focus-within{ border-color:#3ea6ff; }
+.verified-badge{ width:14px; height:14px; background:#aaa; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:#0f0f0f; margin-left:4px; }
+
 @media(max-width:1200px){.chat-panel{display:none}}
 @media(max-width:768px){.header-center,.sidebar{display:none}.stats-grid{grid-template-columns:repeat(2,1fr)}.content{padding:12px}}
 </style>
@@ -727,14 +753,20 @@ body.theater-mode .chat-panel{width:100%;min-height:400px;border-left:none;borde
         <div class="channel-block">
           <div class="ch-avatar">C</div>
           <div class="ch-info">
-            <div class="ch-name">Canal do Usuário</div>
-            <div class="ch-subs">1.2M inscritos</div>
+            <div class="ch-name">Canal do Usuário <span class="verified-badge" title="Verificado">✓</span> <span style="font-size:12px;color:#aaa;font-weight:400">@canaldousuario</span></div>
+            <div class="ch-subs">1,2 mi de inscritos</div>
           </div>
           <button class="sub-btn" id="sub-btn" onclick="toggleSub()"><span id="sub-text">Inscrever-se</span></button>
+          <button class="act-btn" style="background:#272727;border-radius:18px;height:36px;padding:0 12px;display:none" id="bell-btn" onclick="toggleSub()">🔔</button>
         </div>
         <div class="action-btns">
-          <button class="act-btn" id="like-btn" onclick="likeVideo()">👍 <span id="likes">0</span></button>
-          <button class="act-btn">Compartilhar</button>
+          <div style="display:flex;background:#272727;border-radius:18px;overflow:hidden">
+            <button class="act-btn" id="like-btn" onclick="likeVideo()" style="border-radius:18px 0 0 18px;border-right:1px solid #3f3f3f;margin:0">👍 <span id="likes">0</span></button>
+            <button class="act-btn" onclick="likeVideo()" style="border-radius:0 18px 18px 0;margin:0;padding:0 12px">👎</button>
+          </div>
+          <button class="act-btn" onclick="toast('Link copiado!','#3ea6ff')">↗️ Compartilhar</button>
+          <button class="act-btn" onclick="toast('Salvo!','#3ea6ff')">⬇️ Download</button>
+          <button class="act-btn">⋯</button>
         </div>
       </div>
     </div>
@@ -1037,6 +1069,11 @@ body.theater-mode .chat-panel{width:100%;min-height:400px;border-left:none;borde
       <label class="form-label">Mensagem para LER AO VIVO (Voz TTS)</label>
       <input type="text" class="form-input" id="pix-input-msg" value="Manda um salve pra galera de São Paulo! Te acompanho sempre!">
     </div>
+    <div style="background:rgba(50,188,173,0.1);border:1px solid rgba(50,188,173,0.3);border-radius:var(--radius-sm);padding:10px;font-size:12px;color:var(--text-secondary);margin-bottom:12px">
+      🔊 Se a voz não sair, clique em <strong>Testar voz</strong>, verifique se o ícone 🔊 no canto inferior não está com <strong>X</strong> e aumente o volume do PC.<br>
+      <button class="ctrl ctrl-sec" style="margin-top:8px;padding:6px 12px;font-size:12px" onclick="testTTSVoice()">🔊 Testar voz agora</button>
+      <span style="margin-left:8px;font-size:11px" id="tts-status">Vozes: carregando...</span>
+    </div>
     <div class="modal-actions">
       <button class="ctrl ctrl-sec" onclick="closeModal('modal-pix')">Cancelar</button>
       <button class="ctrl ctrl-pix" onclick="submitLivePix()">⚡ Enviar PIX com Voz</button>
@@ -1133,46 +1170,88 @@ function loadTTSVoices(){
     if(ttsVoices.length>0) ttsReady=true;
   }catch(e){}
 }
+function updateTTSStatus(){
+  const el=document.getElementById('tts-status');
+  if(!el) return;
+  if(!('speechSynthesis' in window)) el.textContent='TTS não suportado';
+  else if(ttsVoices.length===0) el.textContent='Vozes: carregando... clique na página';
+  else {
+    const ptCount=ttsVoices.filter(v=>v.lang&&v.lang.toLowerCase().includes('pt')).length;
+    el.textContent='Vozes: '+ttsVoices.length+' ('+ptCount+' pt-BR) '+(ptCount? '✅':'⚠️ sem pt-BR');
+  }
+}
 if('speechSynthesis' in window){
-  loadTTSVoices();
-  window.speechSynthesis.onvoiceschanged = loadTTSVoices;
+  loadTTSVoices(); setTimeout(updateTTSStatus, 500);
+  window.speechSynthesis.onvoiceschanged = ()=>{ loadTTSVoices(); updateTTSStatus(); };
   // Chrome precisa de gesto para carregar vozes; tenta recarregar no primeiro clique
-  document.addEventListener('click', loadTTSVoices, {once:true});
+  document.addEventListener('click', ()=>{ loadTTSVoices(); updateTTSStatus(); if(window.speechSynthesis.paused) window.speechSynthesis.resume(); }, {once:true});
+  // Também atualiza quando modal PIX abre
+  document.addEventListener('click', (e)=>{ if(e.target.closest('#modal-pix')) setTimeout(updateTTSStatus, 200); });
 }
 function speakTTS(text, pitchStyle = 'normal'){
   initAudio();
-  if(!soundEnabled || !('speechSynthesis' in window)) return;
+  if(!soundEnabled){
+    toast('🔇 Som desativado — clique no 🔊 para ativar TTS',' #ff6b6b');
+    return;
+  }
+  if(!('speechSynthesis' in window)){
+    toast('❌ Seu navegador não suporta voz (TTS). Tente Chrome/Edge.',' #ff6b6b');
+    return;
+  }
   try{
-    // Garante vozes carregadas
+    // Desbloqueia AudioContext e speechSynthesis no gesto do usuário (Chrome exige)
+    if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+    if(window.speechSynthesis.paused) window.speechSynthesis.resume();
     if(!ttsReady) loadTTSVoices();
-    window.speechSynthesis.cancel();
-    // Pequeno delay para evitar corte em alguns navegadores
+    // Cancela fala anterior mas não corta imediatamente se estiver no meio da fila PIX (já cancelado no processPixQueue)
+    // window.speechSynthesis.cancel() já foi chamado antes se necessário
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
+    utterance.volume = 1.0;
+    utterance.rate = 0.95;
+    utterance.pitch = pitchStyle === 'high' ? 1.35 : pitchStyle === 'low' ? 0.75 : 1.0;
+
+    // Voz pt-BR: tenta pt-BR exato, depois pt, depois default
+    let ptVoice = ttsVoices.find(v => v.lang && v.lang.toLowerCase() === 'pt-br');
+    if(!ptVoice) ptVoice = ttsVoices.find(v => v.lang && v.lang.toLowerCase().includes('pt-br'));
+    if(!ptVoice) ptVoice = ttsVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
+    // Se não achar pt, pega Google pt-BR se existir
+    if(!ptVoice) ptVoice = ttsVoices.find(v => v.name && v.name.toLowerCase().includes('google') && v.lang.toLowerCase().includes('pt'));
+    if(ptVoice) utterance.voice = ptVoice;
+    else console.warn('[TTS] nenhuma voz pt-BR encontrada, usando padrão. Vozes:', ttsVoices.map(v=>v.lang+'/'+v.name));
+
+    utterance.onstart = ()=>{ console.log('[TTS] falando:', text.slice(0,40)); };
+    utterance.onend = ()=>{ console.log('[TTS] fim'); };
+    utterance.onerror = (e)=>{
+      console.warn('[TTS] erro', e.error, e);
+      if(e.error==='not-allowed' || e.error==='audio-busy'){
+        toast('🔊 Clique na página para liberar o som do PIX!',' #ff6b6b');
+      } else if(e.error==='canceled'){
+        // ignorar, foi cancel() proposital
+      } else {
+        toast('⚠️ Erro TTS: '+e.error,' #ff6b6b');
+      }
+    };
+
+    // Fala IMEDIATAMENTE dentro do gesto do usuário (sem setTimeout que perde o gesto)
+    window.speechSynthesis.speak(utterance);
+
+    // Fallback só se realmente não começou (sem voz pode demorar)
     setTimeout(()=>{
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'pt-BR';
-      utterance.volume = 1.0;
-      utterance.rate = 0.95;
-      utterance.pitch = pitchStyle === 'high' ? 1.35 : pitchStyle === 'low' ? 0.75 : 1.0;
-      // Tenta achar voz pt-BR real, senão usa primeira disponível
-      let ptVoice = ttsVoices.find(v => v.lang && (v.lang.toLowerCase().includes('pt-br') || v.lang.toLowerCase().includes('pt_br')));
-      if(!ptVoice) ptVoice = ttsVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
-      if(ptVoice) utterance.voice = ptVoice;
-      utterance.onend = ()=>{ console.log('[TTS] fim'); };
-      utterance.onerror = (e)=>{ console.warn('[TTS] erro', e.error); };
-      // Desbloqueia sintese se pausada (Chrome)
-      if(window.speechSynthesis.paused) window.speechSynthesis.resume();
-      window.speechSynthesis.speak(utterance);
-      // Fallback: se não falar em 300ms, tenta novamente
-      setTimeout(()=>{
-        if(!window.speechSynthesis.speaking && !window.speechSynthesis.pending){
-          console.warn('[TTS] retry sem voz específica');
-          const u2=new SpeechSynthesisUtterance(text);
-          u2.lang='pt-BR'; u2.rate=0.95; u2.pitch=utterance.pitch;
-          window.speechSynthesis.speak(u2);
-        }
-      }, 400);
-    }, 80);
-  }catch(e){ console.warn('[TTS] exception',e); }
+      if(!window.speechSynthesis.speaking && !window.speechSynthesis.pending && ttsVoices.length===0){
+        console.warn('[TTS] fallback speak sem voz específica');
+        const u2=new SpeechSynthesisUtterance(text);
+        u2.lang='pt-BR'; u2.rate=0.95; u2.pitch=utterance.pitch; u2.volume=1.0;
+        window.speechSynthesis.speak(u2);
+      }
+    }, 600);
+  }catch(e){ console.warn('[TTS] exception',e); toast('Erro TTS: '+e.message,' #ff6b6b'); }
+}
+// Helper para testar voz manualmente (chamado por botão na UI)
+function testTTSVoice(){
+  speakTTS('Teste de voz do PIX! Se você ouviu isso, a voz está funcionando perfeitamente!', 'normal');
+  toast('🔊 Testando voz... aumente o volume!',' #3ea6ff');
 }
 
 /* HIGH-QUALITY HARMONIC SOUND EFFECTS */
